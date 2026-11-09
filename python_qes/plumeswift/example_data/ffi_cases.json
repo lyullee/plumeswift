@@ -1,0 +1,93 @@
+[
+  {
+    "test": 1,
+    "rate_kg_s": 0.225,
+    "Ta": 274.15,
+    "liquid_fraction": 0.888,
+    "wind_speed": 3.2,
+    "wind_from": 246.0,
+    "window_s": 800.0,
+    "sim_s": 900.0,
+    "orientation": "vertical_down",
+    "RH_assumed": 75,
+    "spinup_s": 100
+  },
+  {
+    "test": 2,
+    "rate_kg_s": 0.47,
+    "Ta": 274.65,
+    "liquid_fraction": 0.7,
+    "wind_speed": 4.1,
+    "wind_from": 82.0,
+    "window_s": 400.0,
+    "sim_s": 500.0,
+    "orientation": "vertical_down",
+    "RH_assumed": 75,
+    "spinup_s": 100
+  },
+  {
+    "test": 3,
+    "rate_kg_s": 0.73,
+    "Ta": 276.04999999999995,
+    "liquid_fraction": 0.559,
+    "wind_speed": 5.8,
+    "wind_from": 259.0,
+    "window_s": 400.0,
+    "sim_s": 500.0,
+    "orientation": "vertical_down",
+    "RH_assumed": 75,
+    "spinup_s": 100
+  },
+  {
+    "test": 4,
+    "rate_kg_s": 0.8283,
+    "Ta": 276.45,
+    "liquid_fraction": 0.559,
+    "wind_speed": 6.7,
+    "wind_from": 264.0,
+    "window_s": 275.0,
+    "sim_s": 375.0,
+    "orientation": "horizontal",
+    "RH_assumed": 75,
+    "spinup_s": 100
+  },
+  {
+    "test": 5,
+    "rate_kg_s": 0.715,
+    "Ta": 276.84999999999997,
+    "liquid_fraction": 0.559,
+    "wind_speed": 5.2,
+    "wind_from": 257.0,
+    "window_s": 125.0,
+    "sim_s": 225.0,
+    "orientation": "vertical_down",
+    "RH_assumed": 75,
+    "spinup_s": 100
+  },
+  {
+    "test": 6,
+    "rate_kg_s": 0.8317,
+    "Ta": 276.95,
+    "liquid_fraction": 0.559,
+    "wind_speed": 2.7,
+    "wind_from": 245.0,
+    "window_s": 120.0,
+    "sim_s": 220.0,
+    "orientation": "horizontal",
+    "RH_assumed": 75,
+    "spinup_s": 100
+  },
+  {
+    "test": 7,
+    "rate_kg_s": 0.1617,
+    "Ta": 276.34999999999997,
+    "liquid_fraction": 0.949,
+    "wind_speed": 6.5,
+    "wind_from": 266.0,
+    "window_s": 350.0,
+    "sim_s": 450.0,
+    "orientation": "vertical_down",
+    "RH_assumed": 75,
+    "spinup_s": 100
+  }
+]

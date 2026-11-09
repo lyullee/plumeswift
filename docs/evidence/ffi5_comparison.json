@@ -1,0 +1,194 @@
+{
+  "seed": 20261107,
+  "ffi_cases": 7,
+  "sensor_count": 210,
+  "suite_wall_s": {
+    "python_serial": 231.89438129300106,
+    "python_cases5": 78.05334546900121,
+    "python_particles5": 269.2615411179977,
+    "cpp_serial": 207.41500749400075,
+    "cpp_cases5": 92.88197275800121,
+    "cpp_omp5": 151.98933902299905
+  },
+  "ratios": {
+    "python_serial_to_cases5": 2.970972991607357,
+    "python_cases5_over_cpp_cases5": 0.840349781031943,
+    "python_serial_over_cpp_serial": 1.1180212275609245,
+    "python_particles5_over_cpp_serial": 1.2981777180505407,
+    "python_particles5_over_cpp_omp5": 1.7715817625685772,
+    "python_particles5_over_python_serial": 1.161138702958839
+  },
+  "rmse_to_experiment_pp": {
+    "python_serial": 1.9842871785117766,
+    "python_cases5": 1.9842871785117766,
+    "python_particles5": 1.9842871785117766,
+    "cpp_serial": 1.9654583329370123,
+    "cpp_cases5": 1.9654583329370123,
+    "cpp_omp5": 1.9705380792029121
+  },
+  "cases": {
+    "1": {
+      "case_wall_s": {
+        "python_serial": 57.06630204300018,
+        "python_cases5": 77.96740479200162,
+        "python_particles5": 66.05565032099912,
+        "cpp_serial": 61.43633457099713,
+        "cpp_cases5": 92.86553675899995,
+        "cpp_omp5": 43.88280858599683
+      },
+      "sensors": 30,
+      "python_vs_serial": {
+        "python_cases5": {
+          "max_abs_volpct": 0.0,
+          "mass_accounting_equal": true
+        },
+        "python_particles5": {
+          "max_abs_volpct": 0.0,
+          "mass_accounting_equal": true
+        }
+      },
+      "python_particles_parallel_batches": 6399,
+      "cpp_serial_cases5_max_abs_volpct": 0.0
+    },
+    "2": {
+      "case_wall_s": {
+        "python_serial": 28.704734473001736,
+        "python_cases5": 42.507375297002,
+        "python_particles5": 32.82943875699857,
+        "cpp_serial": 30.37514282600023,
+        "cpp_cases5": 47.75048483599676,
+        "cpp_omp5": 23.153253372998734
+      },
+      "sensors": 30,
+      "python_vs_serial": {
+        "python_cases5": {
+          "max_abs_volpct": 0.0,
+          "mass_accounting_equal": true
+        },
+        "python_particles5": {
+          "max_abs_volpct": 0.0,
+          "mass_accounting_equal": true
+        }
+      },
+      "python_particles_parallel_batches": 2411,
+      "cpp_serial_cases5_max_abs_volpct": 0.0
+    },
+    "3": {
+      "case_wall_s": {
+        "python_serial": 35.082909800999914,
+        "python_cases5": 53.1521545229989,
+        "python_particles5": 39.77801919499689,
+        "cpp_serial": 31.21885951800141,
+        "cpp_cases5": 47.15766031599924,
+        "cpp_omp5": 23.718665014999715
+      },
+      "sensors": 30,
+      "python_vs_serial": {
+        "python_cases5": {
+          "max_abs_volpct": 0.0,
+          "mass_accounting_equal": true
+        },
+        "python_particles5": {
+          "max_abs_volpct": 0.0,
+          "mass_accounting_equal": true
+        }
+      },
+      "python_particles_parallel_batches": 2410,
+      "cpp_serial_cases5_max_abs_volpct": 0.0
+    },
+    "4": {
+      "case_wall_s": {
+        "python_serial": 38.895259132998035,
+        "python_cases5": 57.723845699001686,
+        "python_particles5": 42.27701882999827,
+        "cpp_serial": 25.606408190000366,
+        "cpp_cases5": 45.063667793001514,
+        "cpp_omp5": 18.25834576899797
+      },
+      "sensors": 30,
+      "python_vs_serial": {
+        "python_cases5": {
+          "max_abs_volpct": 0.0,
+          "mass_accounting_equal": true
+        },
+        "python_particles5": {
+          "max_abs_volpct": 0.0,
+          "mass_accounting_equal": true
+        }
+      },
+      "python_particles_parallel_batches": 1782,
+      "cpp_serial_cases5_max_abs_volpct": 0.0
+    },
+    "5": {
+      "case_wall_s": {
+        "python_serial": 15.100775045000773,
+        "python_cases5": 18.906946172999596,
+        "python_particles5": 16.967714245001844,
+        "cpp_serial": 13.894467767000606,
+        "cpp_cases5": 19.16413928000111,
+        "cpp_omp5": 10.695208240002103
+      },
+      "sensors": 30,
+      "python_vs_serial": {
+        "python_cases5": {
+          "max_abs_volpct": 0.0,
+          "mass_accounting_equal": true
+        },
+        "python_particles5": {
+          "max_abs_volpct": 0.0,
+          "mass_accounting_equal": true
+        }
+      },
+      "python_particles_parallel_batches": 1035,
+      "cpp_serial_cases5_max_abs_volpct": 0.0
+    },
+    "6": {
+      "case_wall_s": {
+        "python_serial": 16.849434753999958,
+        "python_cases5": 22.708287021003343,
+        "python_particles5": 18.540431804001855,
+        "cpp_serial": 13.27843301699977,
+        "cpp_cases5": 18.96184490900123,
+        "cpp_omp5": 10.451565122999455
+      },
+      "sensors": 30,
+      "python_vs_serial": {
+        "python_cases5": {
+          "max_abs_volpct": 0.0,
+          "mass_accounting_equal": true
+        },
+        "python_particles5": {
+          "max_abs_volpct": 0.0,
+          "mass_accounting_equal": true
+        }
+      },
+      "python_particles_parallel_batches": 1010,
+      "cpp_serial_cases5_max_abs_volpct": 0.0
+    },
+    "7": {
+      "case_wall_s": {
+        "python_serial": 40.02245951800069,
+        "python_cases5": 60.443296970999654,
+        "python_particles5": 52.63811060199805,
+        "cpp_serial": 31.503551135003363,
+        "cpp_cases5": 46.92478972100071,
+        "cpp_omp5": 21.727640175002307
+      },
+      "sensors": 30,
+      "python_vs_serial": {
+        "python_cases5": {
+          "max_abs_volpct": 0.0,
+          "mass_accounting_equal": true
+        },
+        "python_particles5": {
+          "max_abs_volpct": 0.0,
+          "mass_accounting_equal": true
+        }
+      },
+      "python_particles_parallel_batches": 10763,
+      "cpp_serial_cases5_max_abs_volpct": 0.0
+    }
+  },
+  "python_particles_minimum_batch": 1800,
+  "scope": "One execution per mode in the same Docker Desktop Linux VM, restricted to logical CPUs 0-4. Modes ran without overlapping each other. CPU wind on both models. Python Numba kernels warmed before timing. Original C++ QES with its LH2 coupling writes native NetCDF to container temporary storage and receptor CSV to the workspace. Python writes receptor CSV and JSON. The original OpenMP mode uses five threads per case, with separate random streams."
+}

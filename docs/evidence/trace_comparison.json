@@ -1,0 +1,77 @@
+{
+  "1": {
+    "steps": 8,
+    "force_particles": 16987,
+    "sample_particles": 16928,
+    "force_cells": 12521,
+    "probes": 264,
+    "probes_nonzero": 21,
+    "native_grid_mismatches": 0,
+    "physical_grid_mismatches": 160,
+    "physical_grid_mismatches_at_release_point": 160,
+    "drift_float32_bit_mismatches": 0,
+    "maximum": {
+      "H2_kg_m3": 0.0,
+      "temperature_K": 0.0,
+      "density_kg_m3": 0.0,
+      "volume_fraction": 0.0,
+      "vapor_quality": 0.0,
+      "buoyant_acceleration_m_s2": 0.0,
+      "stored_drift_m_s": 0.0,
+      "independently_generated_table_density_kg_m3": 4.944642473247995e-10,
+      "sample_weight_s": 0.0,
+      "sensor_H2_kg_m3": 6.938893903907228e-17,
+      "sensor_volume_fraction": 2.220446049250313e-16
+    }
+  },
+  "3": {
+    "steps": 8,
+    "force_particles": 10348,
+    "sample_particles": 10307,
+    "force_cells": 7475,
+    "probes": 264,
+    "probes_nonzero": 20,
+    "native_grid_mismatches": 0,
+    "physical_grid_mismatches": 160,
+    "physical_grid_mismatches_at_release_point": 160,
+    "drift_float32_bit_mismatches": 0,
+    "maximum": {
+      "H2_kg_m3": 0.0,
+      "temperature_K": 0.0,
+      "density_kg_m3": 0.0,
+      "volume_fraction": 0.0,
+      "vapor_quality": 0.0,
+      "buoyant_acceleration_m_s2": 0.0,
+      "stored_drift_m_s": 0.0,
+      "independently_generated_table_density_kg_m3": 4.557858535036985e-10,
+      "sample_weight_s": 0.0,
+      "sensor_H2_kg_m3": 5.551115123125783e-17,
+      "sensor_volume_fraction": 1.1102230246251565e-16
+    }
+  },
+  "4": {
+    "steps": 8,
+    "force_particles": 8670,
+    "sample_particles": 8593,
+    "force_cells": 6359,
+    "probes": 264,
+    "probes_nonzero": 21,
+    "native_grid_mismatches": 0,
+    "physical_grid_mismatches": 160,
+    "physical_grid_mismatches_at_release_point": 160,
+    "drift_float32_bit_mismatches": 0,
+    "maximum": {
+      "H2_kg_m3": 0.0,
+      "temperature_K": 0.0,
+      "density_kg_m3": 0.0,
+      "volume_fraction": 0.0,
+      "vapor_quality": 0.0,
+      "buoyant_acceleration_m_s2": 0.0,
+      "stored_drift_m_s": 0.0,
+      "independently_generated_table_density_kg_m3": 3.52289086791302e-10,
+      "sample_weight_s": 0.0,
+      "sensor_H2_kg_m3": 2.7755575615628914e-17,
+      "sensor_volume_fraction": 1.1102230246251565e-16
+    }
+  }
+}

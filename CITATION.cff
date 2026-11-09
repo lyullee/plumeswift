@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use PlumeSwift, cite this release and the original QES methods relevant to your calculation."
+title: "PlumeSwift: Fast 3D Leak Dispersion Research Toolkit"
+type: software
+version: 0.1.0a4
+date-released: 2026-11-09
+authors:
+  - given-names: Ugwiyeon
+    family-names: Lee
+    alias: lyullee
+repository-code: "https://github.com/lyullee/plumeswift"
+license: GPL-3.0-only
+keywords:
+  - gas dispersion
+  - Lagrangian particles
+  - liquid hydrogen
+  - diagnostic wind field

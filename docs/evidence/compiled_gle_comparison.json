@@ -1,0 +1,257 @@
+{
+  "test": 5,
+  "seed": 20261107,
+  "native_runs": [
+    {
+      "wall_s": 14.283,
+      "advection_s": 13.4534
+    },
+    {
+      "wall_s": 13.846,
+      "advection_s": 13.212
+    }
+  ],
+  "python_runs": {
+    "transport_1": {
+      "wall_s": 20.2757375709989,
+      "setup_s": 1.8715427579991228,
+      "integration_s": 18.404194812999776,
+      "accounting": {
+        "released_mass_kg": 160.87499999999886,
+        "active_mass_kg": 18.71154999999998,
+        "escaped_mass_kg": 142.1634499999999,
+        "mass_balance_error_kg": -1.0231815394945443e-12,
+        "released_particles": 22500,
+        "active_particles": 2617,
+        "escaped_particles": 19883,
+        "pending_source_mass_kg": 0.0
+      },
+      "seed": 20261107,
+      "thermo": "legacy",
+      "parallel_sampling_batches": 0
+    },
+    "gle_1": {
+      "wall_s": 14.869698386999517,
+      "setup_s": 1.8147767599984945,
+      "integration_s": 13.054921627001022,
+      "accounting": {
+        "released_mass_kg": 160.87499999999886,
+        "active_mass_kg": 18.71154999999998,
+        "escaped_mass_kg": 142.1634499999999,
+        "mass_balance_error_kg": -1.0231815394945443e-12,
+        "released_particles": 22500,
+        "active_particles": 2617,
+        "escaped_particles": 19883,
+        "pending_source_mass_kg": 0.0
+      },
+      "seed": 20261107,
+      "thermo": "legacy",
+      "parallel_sampling_batches": 0
+    },
+    "gle_2": {
+      "wall_s": 15.06568609900205,
+      "setup_s": 1.8329967770005169,
+      "integration_s": 13.232689322001534,
+      "accounting": {
+        "released_mass_kg": 160.87499999999886,
+        "active_mass_kg": 18.71154999999998,
+        "escaped_mass_kg": 142.1634499999999,
+        "mass_balance_error_kg": -1.0231815394945443e-12,
+        "released_particles": 22500,
+        "active_particles": 2617,
+        "escaped_particles": 19883,
+        "pending_source_mass_kg": 0.0
+      },
+      "seed": 20261107,
+      "thermo": "legacy",
+      "parallel_sampling_batches": 0
+    },
+    "transport_2": {
+      "wall_s": 20.49957743199775,
+      "setup_s": 1.923849300997972,
+      "integration_s": 18.575728130999778,
+      "accounting": {
+        "released_mass_kg": 160.87499999999886,
+        "active_mass_kg": 18.71154999999998,
+        "escaped_mass_kg": 142.1634499999999,
+        "mass_balance_error_kg": -1.0231815394945443e-12,
+        "released_particles": 22500,
+        "active_particles": 2617,
+        "escaped_particles": 19883,
+        "pending_source_mass_kg": 0.0
+      },
+      "seed": 20261107,
+      "thermo": "legacy",
+      "parallel_sampling_batches": 0
+    }
+  },
+  "medians": {
+    "python_transport": {
+      "wall_s": 20.387657501498325,
+      "integration_s": 18.489961471999777
+    },
+    "python_transport_gle": {
+      "wall_s": 14.967692243000783,
+      "integration_s": 13.143805474501278
+    },
+    "native_cpp": {
+      "wall_s": 14.064499999999999,
+      "advection_s": 13.332699999999999
+    }
+  },
+  "python_wall_reduction_fraction": 0.2658454144670234,
+  "ratio_python_to_cpp_before": 1.4495828149950816,
+  "ratio_python_to_cpp_after": 1.0642178707384398,
+  "absolute_python_to_cpp_gap_s_before": 6.323157501498326,
+  "absolute_python_to_cpp_gap_s_after": 0.9031922430007846,
+  "observed_rmse_pp": {
+    "cpp": 1.3236328032404787,
+    "python": 1.2953817419920493,
+    "cpp_vs_python": 0.06850921673883253
+  },
+  "verified_ffi": {
+    "1": {
+      "sensors": 30,
+      "mass_accounting_exact": true,
+      "sensor_predictions_exact": true
+    },
+    "2": {
+      "sensors": 30,
+      "mass_accounting_exact": true,
+      "sensor_predictions_exact": true
+    },
+    "3": {
+      "sensors": 30,
+      "mass_accounting_exact": true,
+      "sensor_predictions_exact": true
+    },
+    "4": {
+      "sensors": 30,
+      "mass_accounting_exact": true,
+      "sensor_predictions_exact": true
+    },
+    "5": {
+      "sensors": 30,
+      "mass_accounting_exact": true,
+      "sensor_predictions_exact": true
+    },
+    "6": {
+      "sensors": 30,
+      "mass_accounting_exact": true,
+      "sensor_predictions_exact": true
+    },
+    "7": {
+      "sensors": 30,
+      "mass_accounting_exact": true,
+      "sensor_predictions_exact": true
+    }
+  },
+  "fast_repeated_snapshots_bitwise_equal": true,
+  "snapshots_max_abs_differences": {
+    "transport_1": {
+      "60.0": {
+        "positions": 0.0,
+        "fluctuations": 0.0,
+        "previous_stress": 0.0,
+        "drift": 0.0
+      },
+      "120.0": {
+        "positions": 0.0,
+        "fluctuations": 0.0,
+        "previous_stress": 0.0,
+        "drift": 0.0
+      },
+      "180.0": {
+        "positions": 0.0,
+        "fluctuations": 0.0,
+        "previous_stress": 0.0,
+        "drift": 0.0
+      },
+      "225.0": {
+        "positions": 0.0,
+        "fluctuations": 0.0,
+        "previous_stress": 0.0,
+        "drift": 0.0
+      }
+    },
+    "gle_1": {
+      "60.0": {
+        "positions": 3.723243935382925e-12,
+        "fluctuations": 4.881095527764501e-13,
+        "previous_stress": 1.6209256159527285e-14,
+        "drift": 0.0
+      },
+      "120.0": {
+        "positions": 1.3073986337985843e-12,
+        "fluctuations": 8.737455203799982e-14,
+        "previous_stress": 2.4980018054066022e-14,
+        "drift": 0.0
+      },
+      "180.0": {
+        "positions": 9.663381206337363e-13,
+        "fluctuations": 4.529709940470639e-14,
+        "previous_stress": 3.652633751016765e-14,
+        "drift": 0.0
+      },
+      "225.0": {
+        "positions": 1.5631940186722204e-12,
+        "fluctuations": 1.6062151608764452e-13,
+        "previous_stress": 6.217248937900877e-15,
+        "drift": 0.0
+      }
+    },
+    "gle_2": {
+      "60.0": {
+        "positions": 3.723243935382925e-12,
+        "fluctuations": 4.881095527764501e-13,
+        "previous_stress": 1.6209256159527285e-14,
+        "drift": 0.0
+      },
+      "120.0": {
+        "positions": 1.3073986337985843e-12,
+        "fluctuations": 8.737455203799982e-14,
+        "previous_stress": 2.4980018054066022e-14,
+        "drift": 0.0
+      },
+      "180.0": {
+        "positions": 9.663381206337363e-13,
+        "fluctuations": 4.529709940470639e-14,
+        "previous_stress": 3.652633751016765e-14,
+        "drift": 0.0
+      },
+      "225.0": {
+        "positions": 1.5631940186722204e-12,
+        "fluctuations": 1.6062151608764452e-13,
+        "previous_stress": 6.217248937900877e-15,
+        "drift": 0.0
+      }
+    },
+    "transport_2": {
+      "60.0": {
+        "positions": 0.0,
+        "fluctuations": 0.0,
+        "previous_stress": 0.0,
+        "drift": 0.0
+      },
+      "120.0": {
+        "positions": 0.0,
+        "fluctuations": 0.0,
+        "previous_stress": 0.0,
+        "drift": 0.0
+      },
+      "180.0": {
+        "positions": 0.0,
+        "fluctuations": 0.0,
+        "previous_stress": 0.0,
+        "drift": 0.0
+      },
+      "225.0": {
+        "positions": 0.0,
+        "fluctuations": 0.0,
+        "previous_stress": 0.0,
+        "drift": 0.0
+      }
+    }
+  },
+  "timing_scope": "CPU wind and one CPU thread, pinning both containers to the same logical CPU on the same Docker Desktop Linux VM. Two fresh C++ executions, and two executions per Python mode after in-process warm-up. C++ timing includes its NetCDF outputs to the container filesystem and receptor CSV to the workspace. Python timings include wind setup and particle simulation, plus four identical checkpoint captures per run."
+}

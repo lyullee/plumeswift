@@ -1,0 +1,6 @@
+external/
+data/
+results/
+__pycache__/
+*.pyc
+.venv/

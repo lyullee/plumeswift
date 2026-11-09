@@ -1,0 +1,26 @@
+{
+  "grid_cells": [48, 28, 20],
+  "cell_size_m": [2.0, 2.0, 1.0],
+  "wind_speed_m_s": 4.0,
+  "wind_from_deg": 270.0,
+  "wind_reference_height_m": 10.0,
+  "roughness_length_m": 0.02,
+  "building": {
+    "x_m": 34.0,
+    "y_m": 25.0,
+    "length_m": 8.0,
+    "width_m": 6.0,
+    "height_m": 5.0
+  },
+  "source_position_m": [16.0, 28.0, 0.5],
+  "release_rate_kg_s": 0.35,
+  "particles_per_s": 100,
+  "ambient_temperature_k": 293.15,
+  "liquid_mass_fraction": 0.6,
+  "relative_humidity_pct": 50.0,
+  "duration_s": 24.0,
+  "average_from_s": 8.0,
+  "step_s": 0.2,
+  "seed": 20261107,
+  "isosurfaces_volpct": [0.5, 2.0, 4.0]
+}

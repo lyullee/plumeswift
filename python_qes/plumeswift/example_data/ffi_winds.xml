@@ -1,0 +1,63 @@
+<QESWindsParameters>
+  <simulationParameters>
+    <halo_x>0.0</halo_x>
+    <halo_y>0.0</halo_y>
+    <domain>120 120 50</domain>
+    <cellSize>2 2 .5</cellSize>
+    <verticalStretching>0</verticalStretching>
+    <totalTimeIncrements>1</totalTimeIncrements>
+    <maxIterations>3000</maxIterations>
+    <tolerance>1e-6</tolerance>
+    <meshTypeFlag>0</meshTypeFlag>
+    <domainRotation>0</domainRotation>
+    <originFlag>0</originFlag>
+    <UTMx>-50</UTMx>
+    <UTMy>-200.5</UTMy>
+    <UTMZone>1</UTMZone>
+    <UTMZoneLetter>17</UTMZoneLetter>
+    <readCoefficientsFlag>0</readCoefficientsFlag>
+  </simulationParameters>
+  <metParams>
+    <z0_domain_flag>0</z0_domain_flag>
+    <sensor>
+      <site_coord_flag>1</site_coord_flag>
+      <site_xcoord>5</site_xcoord>
+      <site_ycoord>5</site_ycoord>
+      <timeSeries>
+        <timeStamp>2020-01-01T01:00:00</timeStamp>
+        <boundaryLayerFlag>1</boundaryLayerFlag>
+        <siteZ0>0.01</siteZ0>
+        <reciprocal>0.0</reciprocal>
+        <height>10</height>
+        <speed>0</speed>
+        <direction>0</direction>
+      </timeSeries>
+    </sensor>
+  </metParams>
+  <turbParams>
+    <sigmaConst>2.5 1.8 1.3</sigmaConst>
+    <method>1</method>
+    <samples>2000</samples>
+    <save>false</save>
+    <nonLocalMixing>false</nonLocalMixing>
+    <terrainWallFlag>2</terrainWallFlag>
+    <buildingWallFlag>2</buildingWallFlag>
+    <backgroundMixing>0.3</backgroundMixing>
+    <turbUpperBound>15.0</turbUpperBound>
+  </turbParams>
+  <buildingsParams>
+    <wallRoughness>0.01</wallRoughness>
+    <rooftopFlag>2</rooftopFlag>
+    <upwindCavityFlag>2</upwindCavityFlag>
+    <streetCanyonFlag>1</streetCanyonFlag>
+    <streetIntersectionFlag>0</streetIntersectionFlag>
+    <wakeFlag>2</wakeFlag>
+    <highRiseFlag>0</highRiseFlag>
+    <sidewallFlag>1</sidewallFlag>
+    <numBuildings>0</numBuildings>
+  </buildingsParams>
+  <fileOptions>
+    <outputFlag>1</outputFlag>
+    <outputFields>all</outputFields>
+  </fileOptions>
+</QESWindsParameters>

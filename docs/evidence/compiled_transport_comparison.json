@@ -1,0 +1,53 @@
+{
+  "test": 5,
+  "seed": 20261107,
+  "simulated_s": 225,
+  "sensors": 30,
+  "original_cpp": {
+    "wall_s": 15.795,
+    "advection_s": 14.134,
+    "omp_threads": 1,
+    "wind_backend": "CPU"
+  },
+  "original_cpp_other_run": {
+    "wall_s": 14.666,
+    "advection_s": 13.3114,
+    "omp_threads": 1,
+    "wind_backend": "CPU"
+  },
+  "python_linux": {
+    "baseline": {
+      "wall_s": 49.29082084500078,
+      "setup_s": 3.2523197830014396,
+      "integration_s": 46.03850106199934
+    },
+    "compiled_cold": {
+      "wall_s": 32.01377938400037,
+      "setup_s": 2.927630379999755,
+      "integration_s": 29.086149004000617
+    },
+    "compiled_cached": {
+      "wall_s": 27.08120617199893,
+      "setup_s": 3.147722639998392,
+      "integration_s": 23.933483532000537
+    }
+  },
+  "speedup_python": 1.8201117236781668,
+  "gap_python_cached_vs_cpp": 1.7145429675212998,
+  "test5_rmse_volpct": {
+    "cpp_to_observed": 1.3236328032404787,
+    "python_to_observed": 1.2953817419920493,
+    "cpp_to_python": 0.06850921673883253
+  },
+  "python_linux_exact_sensors_and_accounting": true,
+  "ffi_windows_exact_sensors_and_accounting": {
+    "1": 108.53698410000652,
+    "2": 51.59573699999601,
+    "3": 74.41967759997351,
+    "4": 82.27434940001694,
+    "5": 24.7574816000415,
+    "6": 29.030391599982977,
+    "7": 72.87635070004035
+  },
+  "timing_scope": "Same Docker Desktop Linux VM and CPU wind, one CPU thread per solver. C++ writes wind/turbulence/plume NetCDF products and receptor CSV. Python times model setup and simulation, and writes receptor CSV and accounting after the timer."
+}
