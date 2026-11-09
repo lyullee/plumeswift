@@ -12,7 +12,7 @@ PlumeSwift는 풍향·풍속, 지형과 장애물을 반영해 3차원 바람장
 - [개발 과정과 검증 재실행](docs/DEVELOPMENT.md)
 - [모듈별 함수·클래스 인덱스](docs/MODULE_REFERENCE.md)
 - [원본 대응 상태](python_qes/component_status.json) 및 [이식 파일 인벤토리](python_qes/port_inventory.json)
-- [인용](CITATION.cff), [이전 QESx 릴리스의 Zenodo 기록](https://doi.org/10.5281/zenodo.24073832) 및 [원본·제3자 고지](python_qes/NOTICE.md)
+- [인용](CITATION.cff), [PlumeSwift 0.1.0a4 Zenodo 기록](https://doi.org/10.5281/zenodo.24079156), [이전 QESx 릴리스 기록](https://doi.org/10.5281/zenodo.24073832) 및 [원본·제3자 고지](python_qes/NOTICE.md)
 
 ## 설치와 첫 실행
 
