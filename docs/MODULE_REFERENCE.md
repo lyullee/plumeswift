@@ -1,6 +1,6 @@
 # PlumeSwift module index
 
-Signatures follow the Python source at this release. See the [README input/output table](../README.md#모듈과-입출력) for units and [the guide](USER_GUIDE.md) for workflows. Unannotated return types are described in the linked implementations. This includes internal compatibility modules that may change.
+Signatures follow the Python source at this release. See the [README case setup](../README.md#run-your-own-qes-style-case) for units and [the guide](USER_GUIDE.md) for workflows. Unannotated return types are described in the linked implementations. This includes internal compatibility modules that may change.
 
 ### `plumeswift.__init__`
 

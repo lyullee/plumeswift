@@ -1,123 +1,213 @@
 # PlumeSwift
 
-**Fast 3D Gas Leak Dispersion**
+**Fast 3D gas leak dispersion for research**
 
-PlumeSwift는 QES v2.3.1을 바탕으로 한 독립 Python 이식판입니다. 이전 공개 이름은 QESx입니다.
+PlumeSwift builds diagnostic wind fields and simulates the transport of released gas with Lagrangian particles. It can account for terrain and obstacles and collect concentrations on a grid or at receptors. Its liquid hydrogen (LH₂) workflows couple equilibrium mixture properties to particle buoyancy and drag. PlumeSwift is an independently maintained Python port based on [QES v2.3.1](https://github.com/UtahEFD/QES-Public/tree/dced7ec571487be7538eca17bfc25bb3262fb6d0), previously published as QESx.
 
-PlumeSwift는 풍향·풍속, 지형과 장애물을 반영해 3차원 바람장을 만들고, 라그랑지안 입자로 가스 누출의 이동과 농도를 계산하는 연구 도구입니다. Python API로 열역학, 풍장, 난류, 적분기, 경계, 수집기를 따로 조립할 수 있습니다. 원본 QES v2.3.1의 진단형 풍장 및 입자 확산 방법을 참조했으며, 액화수소에는 연구용 평형 물성과 부력·항력 결합을 제공합니다.
+[PyPI 0.1.0a4](https://pypi.org/project/plumeswift/0.1.0a4/) · [GitHub release](https://github.com/lyullee/plumeswift/releases/tag/v0.1.0a4) · [Zenodo archive](https://doi.org/10.5281/zenodo.24079156) · [Issue tracker](https://github.com/lyullee/plumeswift/issues)
 
-**상태** · 0.1.0a4 연구 프리릴리스 · Python 3.11 이상 · GPL-3.0-only
+This is an alpha research release for Python 3.11 or newer. The [component status](python_qes/component_status.json) records the QES workflows checked so far and their limits.
 
-- [상세 사용 설명서](docs/USER_GUIDE.md)
-- [개발 과정과 검증 재실행](docs/DEVELOPMENT.md)
-- [모듈별 함수·클래스 인덱스](docs/MODULE_REFERENCE.md)
-- [원본 대응 상태](python_qes/component_status.json) 및 [이식 파일 인벤토리](python_qes/port_inventory.json)
-- [인용](CITATION.cff), [PlumeSwift 0.1.0a4 Zenodo 기록](https://doi.org/10.5281/zenodo.24079156), [이전 QESx 릴리스 기록](https://doi.org/10.5281/zenodo.24073832) 및 [원본·제3자 고지](python_qes/NOTICE.md)
+- [Install and check the command](#install-and-check-the-command)
+- [Run the built-in LH₂ example](#run-the-built-in-lh2-example)
+- [Reproduce the FFI benchmarks](#reproduce-the-ffi-benchmarks)
+- [Run your own QES-style case](#run-your-own-qes-style-case)
+- [Use the Python API](#use-the-python-api)
+- [Validation and model scope](#validation-and-model-scope)
 
-## 설치와 첫 실행
+## Install and check the command
+
+Create a virtual environment, then activate it for your shell.
 
 ```shell
-python -m pip install --pre plumeswift
+python -m venv .venv
+```
+
+**Windows PowerShell**
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+**macOS or Linux**
+
+```bash
+source .venv/bin/activate
+```
+
+Install the published release and run a smoke test. The final command exercises particle release and slot reuse with a fixed seed and no external data.
+
+```shell
+python -m pip install "plumeswift==0.1.0a4"
 plumeswift info
 plumeswift plume-managed-container --steps 20 --release-per-step 16 --seed 0
 ```
 
-개발 체크아웃에서는 `python -m pip install -e "./python_qes[fast,test]"`를 사용합니다. `fast`는 Numba 가속, `thermo`는 CoolProp, `gis`는 GIS·DEM 입력, `cuda11`은 별도 NVIDIA 환경을 위한 선택 의존성입니다. Python 모듈 이름은 `plumeswift`입니다. 레거시 명령은 `plumeswift qesWinds`, `plumeswift qesPlume`, `plumeswift qesFire`, `plumeswift qes`로 실행합니다.
+If the shell cannot find the executable, use `python -m plumeswift` in place of `plumeswift`, using the same interpreter that installed the package. Use `plumeswift --help` to list commands and `plumeswift COMMAND --help` for options. `plumeswift runtime-info` prints runtime information.
 
-## 액화수소 누출 예제와 3D 결과
+| Install extra | What it enables |
+| --- | --- |
+| `visual` | Plotly HTML and scikit-image isosurface extraction for 3D LH₂ output |
+| `ffi` | Reading the official FFI PDF from a local file |
+| `fast` | Numba acceleration for supported numerical paths |
+| `thermo` | The optional CoolProp thermodynamics backend |
+| `gis` | GIS input, including supported Shapefile and raster workflows |
+| `plot` | Matplotlib plots for supported diagnostics |
+| `cuda11` | Optional CuPy CUDA 11 paths on compatible systems |
+| `test` | Pytest for development checks |
 
-Python 3.11 이상 환경에서 아래 명령을 실행하세요. 예제 입력은 배포본에 들어 있어 저장소를 내려받거나 별도 데이터 파일을 구할 필요가 없습니다.
+The CPU workflows below use the base install plus the relevant extras. CUDA and OptiX coverage varies by component.
+
+## Run the built-in LH2 example
 
 ```shell
 python -m pip install "plumeswift[visual]==0.1.0a4"
 plumeswift lh2-demo --output lh2-result --open
 ```
 
-`--open`은 브라우저에서 `lh2-result/plume.html`을 엽니다. 3D 장면을 드래그해 회전하고, 범례에서 농도별 등농도면을 켜거나 끌 수 있습니다. HTML에 표시용 코드와 데이터가 포함되어 있어 저장한 파일은 오프라인에서도 열 수 있습니다.
+The synthetic case releases 0.35 kg/s of hydrogen into a 4 m/s westerly wind beside a 5 m tall obstacle. It simulates 24 seconds and averages gas-phase hydrogen concentration over seconds 8–24. The input is [included in the package](python_qes/plumeswift/example_data/lh2.json).
 
-입력을 확인하거나 바꾸려면 아래처럼 JSON을 꺼낸 뒤 편집하고 재실행하세요.
+Open `lh2-result/plume.html` in a browser. Drag to rotate the scene and use the legend to toggle surfaces. The HTML embeds the display code and data, so you can open it offline. Omit `--open` when running on a machine without a desktop.
+
+To edit the case, export the input, change the JSON, and rerun it in a separate output directory.
 
 ```shell
 plumeswift lh2-demo --write-input lh2-case.json
 plumeswift lh2-demo --input lh2-case.json --output lh2-custom --open
 ```
 
-[기본 입력 파일](python_qes/plumeswift/example_data/lh2.json)은 합성 사례입니다. 기본값은 누출률 0.35 kg/s, 서풍 4 m/s, 높이 5 m 장애물, 계산시간 24초입니다. `grid_cells`와 `cell_size_m`의 순서는 x·y·z이며, 풍향은 바람이 오는 방향입니다. `isosurfaces_volpct`는 표시할 농도 3개를 지정합니다. 계산 범위에 존재하는 등농도면만 표시합니다.
-
-| 결과 | 내용 |
+| Input fields | Meaning |
 | --- | --- |
-| `case.json` | 이번 계산에 사용한 입력 사본 |
-| `plume.html` | 8–24초 평균 기상 수소 농도, 장애물, 누출점의 인터랙티브 3D 장면 |
-| `concentration.npz` | `h2_mean_volpct[z,y,x]`의 체적농도(%), `solid` 장애물 마스크, `coord_x/y/z` 셀 중심 좌표(m) |
+| `grid_cells`, `cell_size_m` | Cell counts and spacing in x, y, z order |
+| `wind_speed_m_s`, `wind_from_deg`, `wind_reference_height_m`, `roughness_length_m` | Reference speed, direction the wind comes from, measurement height, and roughness length |
+| `building`, `source_position_m` | One rectangular obstacle and the release point. Place the release point inside the fluid domain. |
+| `release_rate_kg_s`, `particles_per_s` | Hydrogen mass flow and numerical particle release rate |
+| `ambient_temperature_k`, `liquid_mass_fraction`, `relative_humidity_pct` | Inputs to the equilibrium mixture model |
+| `duration_s`, `average_from_s`, `step_s`, `seed` | Simulation duration, start of averaging, time step, and random seed. Use a positive step and an averaging start before the end. |
+| `isosurfaces_volpct` | Three distinct levels in (0, 100] vol%. The viewer draws the levels reached by the field. |
 
-예제는 PlumeSwift의 연구용 평형 물성과 입자 부력·항력 결합을 사용합니다. FFI 실험 재현 및 검증 절차는 [개발·검증 기록](docs/DEVELOPMENT.md)을 참고하세요.
+The run writes `case.json` with the settings used, `plume.html` with the interactive view, and `concentration.npz` with the gridded result. The CLI prints the averaging duration, peak mean concentration, rendered levels, and mass accounting as JSON.
 
-## FFI 액화수소 실증 7개 조건: 실측 비교와 3D
+## Reproduce the FFI benchmarks
 
-[FFI 공식 보고서 페이지](https://www.ffi.no/en/publications-archive/large-scale-leakage-of-liquid-hydrogen-lh2-tests-related-to-bunkering-and-maritime-use-of-liquid-hydrogen)에서 **Download publication**을 눌러 PDF를 `ffi-report.pdf`로 저장하세요. 아래 명령은 로컬 PDF의 Appendix A에서 야외 Test 1–7의 센서 평균농도 210개를 읽고 계산값과 비교합니다. 패키지에는 [모델 계산 조건](python_qes/plumeswift/example_data/ffi_cases.json)이 들어 있습니다.
+1. Download the official **FFI-RAPPORT 20/03101** PDF and save it locally as `ffi-report.pdf`. Use the full publication, including Appendix A. [FFI publication page](https://www.ffi.no/en/publications-archive/large-scale-leakage-of-liquid-hydrogen-lh2-tests-related-to-bunkering-and-maritime-use-of-liquid-hydrogen)
+2. Install the PDF and visualization extras, then run the seven outdoor release tests.
 
 ```shell
 python -m pip install "plumeswift[fast,visual,ffi]==0.1.0a4"
 plumeswift lh2-ffi --report ffi-report.pdf --workers 5 --output ffi-results --open
 ```
 
-완료되면 `ffi-results/index.html`이 열립니다. 시험별 **3D plume**을 클릭한 뒤 장면을 드래그해 회전하세요. 센서 점에 마우스를 올리면 실측값과 해당 센서 위치의 예측값이 함께 표시됩니다. 등농도면은 모델의 3D 격자 평균장(0.5·2·4 vol% 중 계산 범위에 존재하는 면)이고, 표의 예측값은 각 센서 주변 2 × 2 × 0.2 m 상자에서 별도로 집계한 값입니다.
+The command reads 210 sensor averages from Appendix A of your local PDF. The release includes the [model case settings](python_qes/plumeswift/example_data/ffi_cases.json). The report and measurements stay outside the software distribution. Use a quoted absolute path for `--report` if the PDF is elsewhere or the path contains spaces.
 
 ```shell
-# Test 3만 실행
+# Run only Test 3 and open its report
 plumeswift lh2-ffi --report ffi-report.pdf --tests 3 --output ffi-test3 --open
-# 전체 시험을 계산하되 센서 비교만 저장
+
+# Run all tests and save sensor comparisons without generating 3D fields
 plumeswift lh2-ffi --report ffi-report.pdf --workers 5 --no-3d --output ffi-sensors
 ```
 
-`--workers`를 생략하면 순차로 실행합니다. 5개는 서로 다른 시험을 동시에 계산하는 프로세스 수입니다. `fast`는 선택 사항이며 설치하지 않아도 실행됩니다. `--open` 없이 계산한 뒤 HTML을 직접 열어도 됩니다.
+The default is one worker. With `--workers 5`, up to five independent test cases run in separate processes. The `fast` extra is optional, and its first run can spend time compiling Numba kernels. For sensor-only runs, install `ffi` and use `--no-3d` to run without `visual`.
 
-| 출력 | 내용 |
+| Output | Contents |
 | --- | --- |
-| `index.html` | 시험별 오차와 3D/CSV 링크 |
-| `sensor_comparison.csv` | 센서 좌표, 관측·예측 평균농도(vol%), 오차(예측 − 관측, %p), 두 평균 구간 |
-| `summary.json` | 전체·시험별 RMSE, MAE, 편향, 4 vol% 포착 개수, 질량수지, 실행시간 |
-| `testN/case.json`, `testN/winds.xml` | 시험별 실제 사용 입력 |
-| `testN/plume.html`, `testN/concentration.npz` | 오프라인 3D 뷰어, `h2_mean_volpct[z,y,x]`와 셀 중심 좌표(m). 수평 좌표 원점은 누출점 |
+| `index.html` | Results by test, with links to CSVs and 3D plumes when available |
+| `sensor_comparison.csv` | Sensor coordinates, measured and predicted averages in vol%, differences in percentage points, and the measurement and model averaging windows |
+| `summary.json` | Aggregate and per-test RMSE, MAE, bias, 4 vol% detection counts, mass accounting, and elapsed time |
+| `testN/case.json`, `testN/winds.xml` | The settings used for an individual test |
+| `testN/plume.html`, `testN/concentration.npz` | An offline 3D view and the gridded mean concentration, when 3D output is enabled |
 
-이 명령은 기존 **장애물 없는 야외 기준 계산**을 재현합니다. 보고서의 실측 농도는 산소 결핍에서 환산한 평균이며, 모델은 100초 준비 계산 후 보고서와 동일한 **평균 길이**로 비교합니다. 원시 풍속·풍향 시계열, 현장 컨테이너와 점화는 포함하지 않습니다. 세부 설정은 [FFI 비교 프로토콜](docs/LH2_direct_benchmark.md)에 있습니다.
+In `ffi-results/index.html`, select **3D plume** for a test. Hover over a sensor marker to compare its measured and predicted values. The isosurfaces use the gridded field at 0.5, 2, and 4 vol% where those levels occur. Predictions in the sensor table are averaged separately over a 2 × 2 × 0.2 m box around each sensor, so they can differ from values sampled from the displayed grid.
 
-## 모듈과 입출력
+This benchmark uses a flat, open site with prescribed wind and a 100-second model spin-up followed by an averaging interval of the same length as the reported measurement interval. FFI derives its measured concentrations from oxygen depletion. The benchmark setup omits the site containers, ignition, and time-varying measured winds. [Benchmark protocol](docs/LH2_direct_benchmark.md)
 
-기본 좌표는 **x 동쪽, y 북쪽, z 지면 기준 높이**이며 위치는 m, 속도는 m/s, 시간은 s, 질량은 kg입니다. 풍향은 바람이 **오는 방향**의 북쪽 기준 방위각입니다. 셀 배열은 보통 `[k,j,i]=[z,y,x]`, 입자 위치·속도는 `(N,3)`입니다. 레거시 파일 경로는 각 파일의 단위와 축 순서를 따르므로 일반 Python 배열과 혼용할 때 변환을 확인하세요.
+## Run your own QES-style case
 
-| 단위 모듈 | 목적 | 주요 입력 | 출력 / 다음 모듈 |
-| --- | --- | --- | --- |
-| `assembly`, `contracts` | 수치 정책, 물리 계수와 구현 조립 | `AssemblyConfig`, 구성요소 선택·옵션, seed | 물성 공급자, 솔버, 설정·실행 정보 |
-| `domain`, `geometry`, `gis`, `terrain` | 격자, 장애물, 지형 구성 | 셀 수·격자 간격, 폴리곤·건물 높이, DEM 또는 Shapefile | 격자 축, 지형·고체 셀, 벽·면 구조 |
-| `cutcell_building`, `cutcell_terrain`, `cutcell_walls` | 절단 셀 기하와 경계 처리 | 지표·건물 면, 셀 모서리·격자 | 셀 분류, 열린 면 계수, 절단 셀 보조값 |
-| `meteorology`, `measured_profile`, `native_sensor` | 초기 바람장 구성 | 풍향·풍속, 관측 높이, 거칠기, 안정도 | 수직 프로파일 및 격자 바람 입력 |
-| `wrf`, `hrrr`, `wrf_exchange` | 기상 모델 입력 및 일부 연동 | 시간별 NetCDF, 좌표·지형 또는 교환 마커 | 바람·기상 프레임 및 연동 상태 |
-| `building_pipeline`, `upwind`, `wake`, `rooftop`, `sidewall`, `street_canyon` | 장애물 주변 진단형 바람 보정 | 건물 형상, 기준 풍속, 설정 플래그 | 보정 초기 속도와 셀 상태 |
-| `vegetation`, `canopy_*` | 수목·방풍림·캐노피 영향 | 식생 배치와 높이, 밀도 및 풍장 | 풍속·난류 보정 또는 식생 셀 분류 |
-| `wind_case`, `wind_projection`, `numerics.poisson` | 바람장 조립 및 발산 보정 | 풍장 XML, 격자·벽 stencil, 초기 속도, 허용오차 | `u,v,w`, 셀 플래그, 작업공간, 솔버 수렴 정보 |
-| `turbulence`, `mixing_length`, `ray_mixing` | 입자 구동용 난류장 | 풍속 구배, 벽·지형, 난류 방식 | 응력 6성분, 응력 발산, CoEps, 혼합길이 |
-| `interpolation.FieldSampler` | 격자에서 입자 위치로 보간 | 좌표, staggered `u,v,w`, 난류장, `positions[N,3]` | 평균풍 `(N,3)`, 응력 `(N,3,3)`, 발산·소산·혼합길이 |
-| `sources`, `plume_sources` | 누출 위치·스케줄 정의 | 점·선·상자 형상, kg/s, 입자 방출률, 방출 시각·초기 속도 | 새 입자 위치와 질량 |
-| `thermo`, `thermodynamics.*` | LH₂ 혼합 평형·물성 평가 | 대기 온도 K, 액상 질량분율, RH %, 농도 kg/m³, 물성 공급자 | 온도, 혼합 밀도 kg/m³, 기상 H₂ 체적분율, 기화분율 |
-| `lh2.LH2Momentum` | LH₂ 부력·항력을 입자에 결합 | 위치, 질량, drift, 셀 ID·부피, 시간간격 | 갱신된 drift `(N,3)` 및 힘 진단 |
-| `numerics.langevin`, `compiled_gle` | 난류 입자 속도 갱신 | 이전 속도·응력, 새 응력, 응력 발산, CoEps, dt, 정규 난수 | 새 변동 속도 및 응력 |
-| `particles`, `plume_transport` | 방출·이류·수집 진행 | 방출원, 보간기, 난수·경계, 관측기, 시간 설정 | 입자 상태, 누적 관측량, 질량수지 |
-| `boundaries`, `walls`, `mesh_reflection` | 유출·반사·주기 경계 처리 | 좌표, 이동 벡터, 경계 모드, 고체 배열 또는 삼각형 | 보정 좌표와 속도, 활성 상태 |
-| `deposition` | 입자 침적 계산 | 입자·셀 상태, 침적 파라미터 | 잔여 질량 및 침적 집계 |
-| `statistics`, `plume_collection` | 센서 및 격자 농도 수집 | 센서 중심과 상자 폭, 입자 위치·질량, 평균 시간창 | 시간평균 농도, 격자 농도와 샘플 시각 |
-| `io`, `netcdf_legacy`, `*_output` | 작업공간·농도·입자 저장 | 배열, 좌표, 시각, 출력 스키마 | NetCDF/CSV 및 진단 정보 |
-| `particle_sampling_pool` | 정적 풍장 보간의 사례 내부 병렬 | 읽기 전용 보간기, 워커 수, 최소 입자 수 | 입력 입자 순서로 결합한 풍장·난류 샘플 |
-| `cuda_*`, `optix_ray_mixing` | 선택 GPU·광선 추적 경로 | 장치 버퍼, 배치/셀/입자 상태, CUDA 또는 OptiX 환경 | 장치 계산 결과, 해당 경로의 진단 |
-| `fire_case`, `fire_front`, `fire_grid`, `fire_run` | 화재 전선·연료·연기 경로 | 연료·점화, 경계와 바람장, 시간·출력 설정 | 확산 전선, 연소 및 연기 농도 관련 출력 |
-| `analytical_cases`, `*_diagnostics`, `*_results` | 검증 사례와 오차 계산 | 해석·기준 해 또는 계산 출력 | 비교 지표, 진단 배열과 그림 |
- 
-## 검증에서 확인한 범위
+Use a wind XML file to define the grid, wind observations, terrain and buildings. Use a plume XML file to define release geometry, rate, timing, boundary conditions and collection settings. Place the terrain, release and receptors in the same coordinate system. The FFI workflow writes a `winds.xml` per test that you can inspect as an example.
 
-FFI 7개 조건의 210개 센서에서 Python 순차, 사례별 5프로세스, 사례 내부 5워커의 시간평균 농도와 질량수지가 일치했습니다. 해당 실행에서 Python 사례별 5프로세스는 78.1초, 원본 C++ QES에 연구용 LH₂ 결합을 적용한 대응 실행은 92.9초였습니다. 두 코드의 출력 작업은 달랐습니다. Python 실측 RMSE는 1.9843 %p였고, 실측 평균이 4 vol% 이상인 센서 9개 중 2개를 포착했습니다. [조건·근거·한계](docs/DEVELOPMENT.md)
+```shell
+plumeswift wind winds.xml --output wind-results
+plumeswift plume winds.xml plume.xml --output plume-results
+```
 
-PlumeSwift는 독립 연구용 이식입니다. QES 원본은 University of Utah, University of Minnesota Duluth 및 기여자들이 개발했습니다. 기능별 비교와 미완료 항목은 [이식 상태](python_qes/component_status.json)에 기록되어 있습니다. 공개 소프트웨어의 출처와 적용 라이선스는 [NOTICE](python_qes/NOTICE.md)를 참고하세요.
+These commands expect your own XML files at the paths shown. The `plume` command can also take a saved staggered wind workspace and its matching turbulence NetCDF file through `--turbulence-nc`. Use `--particle-csv` to request particle snapshots. For legacy workflows, use `plumeswift qesWinds`, `plumeswift qesPlume`, `plumeswift qesFire`, or `plumeswift qes` with the supported original-style flags. See the [port status](python_qes/component_status.json) before relying on a specific XML option or backend.
 
-![컨테이너를 포함한 FFI Test 3 모식 계산의 수소 등농도면](docs/evidence/plumeswift-lh2-side.png)
+To see a complete plume configuration without external inputs, generate a short analytical case and run it using the saved wind and turbulence fields.
 
-청록색과 주황색은 각각 2 vol%, 8 vol% 등농도면입니다. 이 화면은 건조 공기와 모식 컨테이너를 적용한 후처리 사례이며, 높이 축을 확대했습니다.
+```shell
+plumeswift plume-analytical-case powerlaw-x --prepare-only --steps 20 --output analytical-inputs
+plumeswift plume analytical-inputs/PowerLawBLFlow_xDir_windsWk.nc analytical-inputs/PowerLawBLFlow_xDir_ContRelease.xml --turbulence-nc analytical-inputs/PowerLawBLFlow_xDir_turbOut.nc --output analytical-results
+```
+
+In the examples, x is east, y is north, and z is height. Bearings are measured clockwise from north and describe where the wind comes **from**. Positions are in metres, velocity in m/s, time in seconds, and mass in kilograms. Cell arrays are generally indexed `[z, y, x]`, and particle positions and velocities are `(N, 3)`. Check the format before mixing arrays with legacy QES files.
+
+## Use the Python API
+
+The example below loads the packaged LH₂ case, changes the release rate, runs it, and reads the output grid. It uses the `visual` extra installed above.
+
+```python
+import json
+from pathlib import Path
+
+import numpy as np
+from plumeswift.lh2_demo import example_input, run_demo
+
+case = json.loads(example_input())
+case["release_rate_kg_s"] = 0.25
+output = Path("lh2-python")
+result = run_demo(case, output)
+print(result["peak_mean_volpct"], result["accounting"])
+
+with np.load(output / "concentration.npz") as field:
+    concentration = field["h2_mean_volpct"]   # [z, y, x], vol%
+    obstacle_mask = field["solid"]
+    x, y, z = (field[f"coord_{axis}"] for axis in "xyz")  # cell centres, m
+    print(concentration.shape, len(z), len(y), len(x))
+```
+
+The grid contains mean **gas-phase hydrogen volume concentration** in vol%. Solid cells in the synthetic example are masked with `NaN`. FFI grid output uses horizontal coordinates relative to the release point. Keep volume fraction (0–1), vol% (0–100), and mass concentration (kg/m³) separate when comparing outputs.
+
+The main components can also be composed directly.
+
+| Module | Inputs and outputs |
+| --- | --- |
+| `assembly`, `contracts` | Select a solver, thermodynamics backend, numerical settings and seed through `AssemblyConfig`. |
+| `domain`, `geometry`, `gis`, `terrain`, `cutcell_*` | Build grid coordinates, solid cells, and cut-cell geometry from dimensions, obstacles and terrain. |
+| `meteorology`, `native_sensor`, `wrf`, `hrrr` | Build inflow profiles or load supported weather fields from observations or meteorological data. |
+| `wind_case`, `wind_projection`, `numerics.poisson` | Build a wind workspace and solve the divergence correction. `read_wind_case(path).run()` returns the workspace, solver diagnostics and turbulence output. |
+| `building_pipeline`, `vegetation`, `canopy_*` | Apply diagnostic velocity adjustments around buildings and vegetation. |
+| `turbulence`, `mixing_length`, `interpolation.FieldSampler` | Construct turbulence fields and sample wind and turbulence at particle positions. |
+| `sources`, `particles`, `boundaries`, `walls` | Define release and boundary behavior, integrate particle trajectories, and track mass. |
+| `thermo`, `lh2.LH2Momentum` | Evaluate mixture properties from local hydrogen concentration and couple buoyancy and drag to particle drift. |
+| `statistics`, `plume_collection`, `io` | Average concentrations at receptors or on a grid and write arrays or diagnostic output. |
+| `fire_case`, `fire_run`, `cuda_*`, `optix_ray_mixing` | Provide selected research workflows and backend paths with component-specific coverage. |
+
+For a longer example of coupling thermodynamics and particle drift, see the [user guide](docs/USER_GUIDE.md). For function signatures and module coverage, see the [module index](docs/MODULE_REFERENCE.md) and the [port inventory](python_qes/port_inventory.json).
+
+## Validation and model scope
+
+In the documented FFI benchmark, PlumeSwift obtained an RMSE of **1.9843 percentage points** across 210 time-averaged measurements. Nine sensors measured at least 4 vol%, and the model predicted at least 4 vol% at two of those sensors. The documented serial and parallel Python runs agreed on sensor concentrations and mass accounting. An earlier timing comparison took 78.1 seconds for five Python case workers and 92.9 seconds for five C++ case workers with the research LH₂ coupling. The two workflows performed different output work, so these figures describe those runs. [Development and validation notes](docs/DEVELOPMENT.md) · [Timing and comparison data](docs/evidence/ffi5_comparison.json)
+
+The LH₂ model uses equilibrium properties and particle coupling for research. Separate validation is needed for scenarios dominated by flashing, separate liquid droplets or pools, ground heat transfer, density feedback on the wind field, or ignition. The FFI results also show limited recovery of high measured concentrations. Use the [validation protocol](docs/LH2_direct_benchmark.md) and [component status](python_qes/component_status.json) to assess fit for a particular scenario.
+
+![Two hydrogen concentration isosurfaces around a schematic container](docs/evidence/plumeswift-lh2-side.png)
+
+The illustration shows a separate postprocessing example using FFI Test 3 wind and flow conditions, dry air, and a schematic container. Cyan and orange denote 2 and 8 vol%, respectively, with an exaggerated vertical axis.
+
+## Develop and cite
+
+From a repository checkout, install in editable mode and run the targeted tests.
+
+```shell
+git clone https://github.com/lyullee/plumeswift.git
+cd plumeswift
+python -m pip install -e "./python_qes[fast,test,visual,ffi]"
+python -m pytest -q python_qes/tests/test_components.py python_qes/tests/test_numerics.py python_qes/tests/test_lh2_demo.py python_qes/tests/test_ffi_lh2.py
+```
+
+See the [development notes](docs/DEVELOPMENT.md) for reproducibility details and the [release procedure](docs/RELEASE.md) for packaging.
+
+When using PlumeSwift in research, cite the specific version and acknowledge the relevant QES methods and experimental data sources. [Citation metadata](CITATION.cff) · [PlumeSwift 0.1.0a4 DOI](https://doi.org/10.5281/zenodo.24079156) · [Historical QESx archive](https://doi.org/10.5281/zenodo.24073832)
+
+The QES-derived code is distributed under GPL-3.0-only. The glibc-derived numerical components retain LGPL-2.1-or-later. See the [GPL license](LICENSE), [LGPL license](python_qes/LICENSE.LGPL-2.1), and [attribution and third-party notices](python_qes/NOTICE.md).

@@ -44,7 +44,7 @@ print(next_drift, diagnostics)
 
 질량을 같은 셀 안에서 먼저 합산하고, 셀 부피로 나눈 농도를 물성에 전달한다. 물성 공급자는 평가한 온도, 밀도, 체적분율과 기화분율을 반환한다. `CoolPropEquilibrium`을 선택할 때는 지원 범위와 범위를 벗어난 입력의 처리 옵션을 먼저 확인한다. `LH2Momentum`이 반환한 drift는 평균 바람장에 더하는 결합 성분이다.
 
-설치본에서 Python PlumeSwift의 실측 비교를 재실행하려면 [README의 `plumeswift lh2-ffi` 명령](../README.md#ffi-액화수소-실증-7개-조건-실측-비교와-3d)을 사용한다. 외부 모델 비교나 이전 연구 스크립트 재현에는 `scripts/benchmark_python_lh2.py`를 사용한다. 외부 입력을 확보하면 아래 디렉터리 규약을 따른다.
+설치본에서 Python PlumeSwift의 실측 비교를 재실행하려면 [README의 `plumeswift lh2-ffi` 명령](../README.md#reproduce-the-ffi-benchmarks)을 사용한다. 외부 모델 비교나 이전 연구 스크립트 재현에는 `scripts/benchmark_python_lh2.py`를 사용한다. 외부 입력을 확보하면 아래 디렉터리 규약을 따른다.
 
 ```text
 data/FFI/lh2_ffi_sensors.csv
