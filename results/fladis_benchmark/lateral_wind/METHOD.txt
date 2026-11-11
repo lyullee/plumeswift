@@ -1,0 +1,54 @@
+FLADIS lateral variation of the measured mean wind direction
+
+The comparison control is ../mast_wind, which used each trial's station
+means as a function of x and averaged the two far-mast wind directions.
+This test uses the same four independent meteorological rows in each
+SMEDIS workbook. All three cases use one rule. The molecular properties,
+source, heat and turbulence closures, time perturbation, particle rate
+(120/s), time step (0.25 s), seed, receptor coordinates and averaging
+windows are those of the control.
+
+At 70 m and upstream, retain the x-dependent mean direction of the
+control. From x=70 to x=227.5 m, linearly increase a transverse gradient
+derived from the two actual far-mast positions and measured directions.
+Meteorological from-bearings become local slopes through
+m = tan(290 degrees - bearing). The far slope is linear in survey y
+between the two observed mast values and is extended linearly outside
+them. The slopes reproduce the two measured bearings exactly prior
+to the inherited temporal direction perturbation.
+
+To compensate transverse spreading in the unperturbed mean field, set
+u = U0(z) exp(-integral(B dx)) and v = u (A + B y).
+The x-dependent intercept A, including the tiny tangent/circular-mean
+offset, and B are derived only from meteorological inputs. Before the
+inherited coherent time rotations, du/dx + dv/dy is zero. As in the
+preceding test, those rotations and the fixed-frame turbulent covariance
+are retained. This is a simplified interpolated field based on time-
+averaged 10 m wind observations, not a resolved reconstruction of the
+site's time-dependent, height-dependent or building-induced wind.
+
+Verified in an independent input check:
+  The interpolated far-mast bearings match all six measured far-mast
+  values within 1e-10 deg.
+  Finite-difference unrotated horizontal divergence is below 1e-8 s^-1.
+  The positive-y slope gradients are about 0.000260, 0.000832 and
+  0.001721 m^-1 for Trials 9, 16 and 24.
+  The purely kinematic far-field lateral stretch factors are about
+  1.023, 1.077 and 1.166. These are diagnostics, not concentration fits.
+
+The paired-sensor plume center is the concentration-weighted y centroid.
+The model's arc scan width and peak are compared to the published SMEDIS
+summaries. Paired-sensor width and peak are also retained. Nominal 240 m
+includes the actual 238/240 m arcs and surveyed receptor coordinates.
+FLACS comparison uses the public Gexcon CERC-source Pasquill D fixed-
+height arc maximum, with its C/E envelope in the CSV. Spatial center
+and width outputs are absent from that submission.
+
+Sources
+  https://admlc.com/smedis-dataset/
+  https://admlc.com/wp-content/uploads/2025/05/fladis-test-site-geometry-and-wind-directions-v1.pdf
+  https://admlc.com/wp-content/uploads/2025/05/flacs_gexcon_lmauri.zip
+
+With the environment in ../METHOD.txt:
+  .venv/Scripts/python.exe results/fladis_benchmark/fladis_sensitivity.py --particles 120 --workers 3 --modes lateral
+  .venv/Scripts/python.exe results/fladis_benchmark/compare_fladis_lateral.py

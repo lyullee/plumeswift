@@ -1,0 +1,50 @@
+FLADIS 9, 16, 24 mast-wind direction audit
+
+Inputs are from SMEDIS v2.4 fladis9.xls, fladis16.xls and fladis24.xls,
+section Wind_Direction_Sensor. The four rows per trial are measured means
+at 10 m above ground. Keep the SMEDIS survey convention, +x at 110 degrees
+clockwise from grid north, meteorological from-directions, and +y
+counterclockwise from +x. The along-axis from-direction is 290 degrees.
+The physical survey origin is distinct from Trial 16's release point at
+(-2, 0, 1.5) m. The PlumeSwift grid translates every x by +20 m and y
+by +104 m, including the station x locations; the reported coordinates
+remove that translation. Sensor coordinates and benchmark scan positions
+are paired with the previous run. The nominal far arc includes 238 and
+240 m; the archive's actual surveyed sensor locations are used for the
+paired results.
+
+The earlier JRIII case-wide means were 296, 278 and 281 degrees. Use the
+measured station means at x = -6.5, 70 and 227.5 m instead. For the last
+station x, average the two flanking bearings on the circle with equal
+weights. Interpolate bearings linearly in x and hold the nearest value
+outside the station range. At each height, retain the original mean
+longitudinal wind and set v/u = tan(290 degrees minus the station bearing).
+This avoids introducing a longitudinal mean divergence from turning the
+flow. The earlier zero-mean time perturbation, thermodynamics, source,
+wind speed profile for u, turbulence covariance, 120 particles/s, 0.25 s
+step, seed and concentration averaging windows are reused. The measured
+direction varies across the final arc, especially in Trial 24. The averaged
+far station therefore represents a simplified wind field, not a measured
+2-D or time-varying field. No concentration measurement is used to choose
+or weight the wind inputs.
+
+Center is the concentration-weighted y centroid evaluated on identical
+observed sensor locations at the reference height. Width and peak use
+the same fixed-height benchmark arc scan as the original and are compared
+with the published SMEDIS width and maximum. The paired-sensor widths and
+peaks are also provided, including the 70 m height distinction in Trial 24.
+The Gexcon CERC-source FLACS reference here is the Pasquill D
+fixed-height peak in requested_arcmax_conc_meashts.txt. The C/E envelope
+is retained. The archive provides arc maxima, not a spatial receptor
+profile from which to calculate comparable centers or widths. Geometric
+drift change is the integral of the mean v/u difference from handoff
+to the nominal arc, a diagnostic without turbulent transport.
+
+Sources
+  https://admlc.com/smedis-dataset/
+  https://admlc.com/wp-content/uploads/2025/05/fladis-test-site-geometry-and-wind-directions-v1.pdf
+  https://admlc.com/wp-content/uploads/2025/05/flacs_gexcon_lmauri.zip
+
+With the benchmark environment from ../METHOD.txt:
+  .venv/Scripts/python.exe results/fladis_benchmark/fladis_sensitivity.py --particles 120 --workers 3 --modes mast
+  .venv/Scripts/python.exe results/fladis_benchmark/compare_fladis_mast.py

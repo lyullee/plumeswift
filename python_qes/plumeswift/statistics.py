@@ -62,11 +62,17 @@ class TimeAveragedSensors:
         if start_s<0 or end_s<=start_s:raise ValueError("Invalid averaging interval")
         self.boxes=boxes;self.start=start_s;self.end=end_s;self.thermo=thermo
         self.integral=np.zeros(len(boxes.centres));self.sampled_s=0.
-    def observe(self,time_start,dt,positions,masses):
+    def observe(self,time_start,dt,positions,masses,*,enthalpy=None):
         weight=max(0.,min(time_start+dt,self.end)-max(time_start,self.start))
         if not weight:return
         c=self.boxes.concentrations(positions,masses)
-        value=self.thermo.evaluate(c).volume_fraction if self.thermo is not None else c
+        if self.thermo is None:
+            value = c
+        elif enthalpy is None:
+            value = self.thermo.evaluate(c).volume_fraction
+        else:
+            energy = self.boxes.concentrations(positions, masses * enthalpy)
+            value = self.thermo.evaluate(c, energy).volume_fraction
         self.integral+=weight*value;self.sampled_s+=weight
     def mean(self):
         if not self.sampled_s:raise RuntimeError("No samples in requested averaging window")

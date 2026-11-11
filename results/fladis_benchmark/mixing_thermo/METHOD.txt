@@ -1,0 +1,123 @@
+FLADIS 9 / 16 / 24: vertical integration, water thermodynamics and marker self-density
+Date: 2026-11-11
+
+Question
+  Diagnose persistent overprediction downstream of 70 m without fitting
+  turbulence, heat transfer, wind direction or material parameters to sensors.
+
+Frozen baseline
+  results/fladis_benchmark/lateral_wind/pps120
+  Includes measured mast means by x and y, divergence-compensated lateral
+  mean field, existing synthetic low-frequency wind sequence, measured sigma_w,
+  existing MOST dissipation and GLE, ground h=20 W/(m2 K), dry ideal NH3/air.
+  That wind sequence matches summary variability, not measured time series.
+
+Same conditions
+  NH3 rates 0.40 / 0.27 / 0.46 kg/s; averaging/release windows 600 / 600 / 400 s.
+  Seed 20261110, 120 markers/s, main dt=0.25 s with adaptive substeps.
+  Grid cells 2 x 2 x 0.25 m, force reconstruction volume 1 m3.
+  Same source disks, speeds, positions, receptor coordinates/volumes, mast
+  observations, ground heat, drag and shallow-layer coefficients in every run.
+  No concentration-based optimization or selected-trial coefficient changes.
+  Original source temperature 203.7 / 203.9 / 204.0 K, NH3 12 mol%.
+
+Independent changes
+  midpoint: existing stochastic midpoint scheme; no new turbulence constants.
+    Stationary-covariance analytical check solves the discrete Lyapunov equation
+    for the exact numerical map (rather than estimating variance from sensors).
+    Homogeneous covariance is preserved; this alone does not prove the
+    inhomogeneous well-mixed condition or time-step convergence of trajectories.
+    In fact, the analytical discrete velocity autocorrelation sum gives the
+    SAME homogeneous long-time diffusivity for BE and midpoint. Therefore a
+    variance deficit alone must not be presented as proof of deficient mixing.
+  moist: dry NH3 gas + humid air with water vapor/ice/liquid equilibrium.
+    Workbook RH is 86%, 0.62 and 0.536 respectively; normalized to percentages
+    by the workbook label, not by dispersion outcomes.
+    Close pressure, NH3 mass, inferred dry-air/water loading and energy together.
+    Include vaporization, condensation, freezing/melting and sensible heat.
+    Nonzero condensate mass contributes to mixture density; condensate volume
+    is neglected. Root domain 160--400 K; invalid states fail explicitly.
+    Binary NH3-water dissolution/activity/excess enthalpy is NOT implemented.
+    No aerosol deposition or independently transported water scalar is added.
+  loo: optional leave-one-out cell-mean density for buoyancy/pressure only.
+    Remove one average Monte Carlo marker's species mass and enthalpy before
+    evaluating the FORCE density. Keep ALL mass and energy in thermal and
+    material budgets and in concentration observers. Count=1 gives ambient
+    force density; large counts approach the ordinary estimator.
+    Cell-mean approximation requires equal marker masses and approximates
+    differing enthalpy histories by their cell mean. Unequal masses fail.
+    This removes the known m/V self-contribution; nonlinear-density sampling
+    bias remains possible. It is an experimental diagnostic, NOT a substitute
+    for marker-count/grid convergence and NOT enabled as a production default.
+
+Run matrix
+  before: archived frozen baseline (not rerun, used as supplied reference).
+  midpoint: dry, original source enthalpy, midpoint only.
+  moist: moist, original dry source enthalpy, backward Euler.
+  moist_midpoint: moist, original dry source enthalpy, midpoint.
+  source_moist_midpoint: moist, midpoint, rederive source enthalpy from the
+    SAME prescribed 12 mol% and source temperature in the humid closure.
+  loo_moist_midpoint: preceding source-consistent case + leave-one-out forces.
+  Every new mode is run for ALL three trials, not just the worst trial.
+
+Source convention is critical
+  Original dry h: -1.2434 / -1.2551 / -1.2683 MJ per kg NH3.
+  Humid source h at the SAME source T and 12 mol%:
+    -1.5951 / -1.5246 / -1.5181 MJ/kg.
+  Keeping old dry h in the humid EOS instead gives source equilibrium T
+    220.35 / 216.70 / 215.85 K, rather than the prescribed 203.7--204 K.
+  Those fixed-h runs are energy-controlled ablations, not matching-source-T
+  validation. Do not report their apparent improvement as an equal-source test.
+  Tabulated sources themselves were inferred, not thermodynamic time-series
+  measurements; this source ambiguity cannot be removed by tuning receptors.
+
+Independent diagnostics
+  stationary_covariance.csv: exact homogeneous GLE stationary covariance.
+  thermodynamic_states.csv: density, temperature, condensate, acceleration,
+    NH3 self-virial correction estimate at its PARTIAL pressure. This virial
+    estimate is a dilute-gas diagnostic, not a full NH3/air mixture EOS bound.
+  source_conventions.csv: source energy and temperature consistency.
+  marker_resolution.csv: one-marker force-cell floor and acceleration.
+    Dry one-marker concentrations are 4553 / 3095 / 5297 ppmv. They are NOT
+    sensor detection limits: sensors average over space and time and can
+    predict much lower means. The issue is instantaneous force reconstruction.
+
+Comparison rules
+  sensor_comparison.csv: 153 identical receptors for each configuration.
+  arc_comparison.csv: maxima, lateral widths, paired-sensor centers at nominal
+    20, 70 and 240 m. Actual far radii are 238, 240, 238 m as before.
+  metrics.csv: sensor MAE (including zero observations), NMSE, FB, FAC2 over
+    positive observations only, center/width MAE and peak geometric error.
+  FLACS D is the published CERC-source submission; alternate E/C min/max are
+    included. FLACS receptor fields, vertical profiles and widths are NOT
+    available in that archive, so do not fabricate corresponding comparisons.
+  The published 70 m observed peak can come from a different vertical level
+    than the fixed z=0.5 m model arc; paired-receptor MAE avoids this ambiguity.
+  Multiple jobs share CPU/RAM; wall times are provenance, not a controlled
+    timing comparison with the archived baseline or FLACS.
+  A common seed is recorded, but changed paths/adaptive timesteps consume
+    random draws differently. These are single-realization sensitivity tests,
+    not paired trajectories or statistical confidence intervals. Small changes
+    should not be interpreted as established accuracy improvements.
+
+Sources
+  SMEDIS observations: https://admlc.com/smedis-dataset/
+  JRIII protocol cached locally: data/dispersion_benchmarks/jriii_protocol.pdf,
+    page 9 table 4 (source concentration is MOLAR, not mass percent).
+  Gexcon archive: tmp/ammonia_benchmarks/flacs.zip
+  Skarsvag, Fyhn & Aasen (2024), doi:10.1016/j.jlp.2024.105446:
+    https://arxiv.org/html/2404.17285
+    Identifies NH3-water VLE and excess enthalpy missing from a water-only model;
+    its 240--300 K displayed correlation is not extrapolated to this 204 K source.
+  Water saturation/enthalpy is shared with thermodynamics/moisture.py:
+    Buck liquid saturation; IAPWS R14-08 ice-Ih sublimation;
+    cp_vapor 1860, cp_ice 2100, cp_liquid 4180 J/(kg K), fusion 333500 J/kg.
+
+Reproduce (repository-root PowerShell; local benchmark data/dependencies required)
+  $env:PYTHONPATH=((Resolve-Path python_qes).Path,(Resolve-Path tmp).Path,(Resolve-Path tmp/smedis_deps).Path) -join ';'
+  $env:OPENBLAS_NUM_THREADS='1'
+  $env:NUMBA_CACHE_DIR=Join-Path (Resolve-Path tmp).Path 'lh2-cryogenic-numba'
+  .venv/Scripts/python.exe results/fladis_benchmark/diagnose_fladis_mixing.py
+  .venv/Scripts/python.exe results/fladis_benchmark/fladis_sensitivity.py --particles 120 --workers 3 --modes midpoint moist moist_midpoint source_moist_midpoint loo_moist_midpoint
+  .venv/Scripts/python.exe results/fladis_benchmark/compare_fladis_mixing.py
+  .venv/Scripts/python.exe -m pytest python_qes/tests/test_ammonia_moist.py python_qes/tests/test_particle_density.py python_qes/tests/test_lh2_cryogenic.py -q

@@ -4,7 +4,7 @@
 
 PlumeSwift builds diagnostic wind fields and simulates the transport of released gas with Lagrangian particles. It can account for terrain and obstacles and collect concentrations on a grid or at receptors. Its liquid hydrogen (LH₂) workflows couple equilibrium mixture properties to particle buoyancy and drag. PlumeSwift is an independently maintained Python port based on [QES v2.3.1](https://github.com/UtahEFD/QES-Public/tree/dced7ec571487be7538eca17bfc25bb3262fb6d0), previously published as QESx.
 
-[PyPI 0.1.0a4](https://pypi.org/project/plumeswift/0.1.0a4/) · [GitHub release](https://github.com/lyullee/plumeswift/releases/tag/v0.1.0a4) · [Zenodo archive](https://doi.org/10.5281/zenodo.24079156) · [Issue tracker](https://github.com/lyullee/plumeswift/issues)
+[PyPI 0.1.0a5](https://pypi.org/project/plumeswift/0.1.0a5/) · [GitHub release](https://github.com/lyullee/plumeswift/releases/tag/v0.1.0a5) · [Zenodo archive](https://doi.org/10.5281/zenodo.24141108) · [Issue tracker](https://github.com/lyullee/plumeswift/issues)
 
 This is an alpha research release for Python 3.11 or newer. The [component status](python_qes/component_status.json) records the QES workflows checked so far and their limits.
 
@@ -38,7 +38,7 @@ source .venv/bin/activate
 Install the published release and run a smoke test. The final command exercises particle release and slot reuse with a fixed seed and no external data.
 
 ```shell
-python -m pip install "plumeswift==0.1.0a4"
+python -m pip install "plumeswift==0.1.0a5"
 plumeswift info
 plumeswift plume-managed-container --steps 20 --release-per-step 16 --seed 0
 ```
@@ -61,7 +61,7 @@ The CPU workflows below use the base install plus the relevant extras. CUDA and 
 ## Run the built-in LH2 example
 
 ```shell
-python -m pip install "plumeswift[visual]==0.1.0a4"
+python -m pip install "plumeswift[visual]==0.1.0a5"
 plumeswift lh2-demo --output lh2-result --open
 ```
 
@@ -94,7 +94,7 @@ The run writes `case.json` with the settings used, `plume.html` with the interac
 2. Install the PDF and visualization extras, then run the seven outdoor release tests.
 
 ```shell
-python -m pip install "plumeswift[fast,visual,ffi]==0.1.0a4"
+python -m pip install "plumeswift[fast,visual,ffi]==0.1.0a5"
 plumeswift lh2-ffi --report ffi-report.pdf --workers 5 --output ffi-results --open
 ```
 
@@ -120,7 +120,20 @@ The default is one worker. With `--workers 5`, up to five independent test cases
 
 In `ffi-results/index.html`, select **3D plume** for a test. Hover over a sensor marker to compare its measured and predicted values. The isosurfaces use the gridded field at 0.5, 2, and 4 vol% where those levels occur. Predictions in the sensor table are averaged separately over a 2 × 2 × 0.2 m box around each sensor, so they can differ from values sampled from the displayed grid.
 
-This benchmark uses a flat, open site with prescribed wind and a 100-second model spin-up followed by an averaging interval of the same length as the reported measurement interval. FFI derives its measured concentrations from oxygen depletion. The benchmark setup omits the site containers, ignition, and time-varying measured winds. [Benchmark protocol](docs/LH2_direct_benchmark.md)
+The default benchmark uses a flat, open site, prescribed wind and a 100-second model spin-up. FFI derives measured hydrogen concentrations from oxygen depletion. The optional measured-weather workflow replays mast winds from the DNV workbooks on the experimental clock. The ISO container, carrier-air handoff and horizontal crossflow jet can be enabled separately. [Benchmark protocol](docs/LH2_direct_benchmark.md) · [Measured-weather workflow](docs/USER_GUIDE.md#4-run-and-interpret-the-ffi-benchmark)
+
+### Try the experimental cryogenic models
+
+The `legacy` setting reproduces the archived benchmark. The `jet`, `pool`, and `dense` settings add an integral two-phase jet, ground impact and pool evaporation for downward releases, and a near-ground density-pressure correction, respectively. The settings are cumulative. Install the `thermo` extra for any of these three settings.
+
+```bash
+python -m pip install -e './python_qes[thermo,ffi,fast]'
+plumeswift lh2-ffi --report ffi-report.pdf --tests 5 6 --workers 2 --physics jet --no-3d --output ffi-jet
+plumeswift lh2-ffi --report ffi-report.pdf --tests 5 6 --workers 2 --physics pool --no-3d --output ffi-pool
+plumeswift lh2-ffi --report ffi-report.pdf --tests 5 6 --workers 2 --physics dense --no-3d --output ffi-dense
+```
+
+Add the `visual` extra and omit `--no-3d` to export the 3D plots. The cryogenic presets use a nozzle height of 0.32 m for downward releases and 0.50 m for horizontal releases. Tests 5 and 6 use the published CFD exit vapor mass fraction of 0.105. The other tests use the archived phase assumptions. Use `--cryogenic-rh`, `--ground-heat-transfer` and `--density-entrainment` to vary moisture, ground-to-cloud heat and density-driven mixing independently. The summary records the nozzle basis, heat and exchange diagnostics. [Experimental cryogenic workflow](docs/USER_GUIDE.md#experimental-cryogenic-workflow) · [Published FFI CFD inlet conditions](https://hysafe.info/uploads/papers/2023/152.pdf)
 
 ## Run your own QES-style case
 
@@ -187,6 +200,8 @@ For a longer example of coupling thermodynamics and particle drift, see the [use
 
 ## Validation and model scope
 
+[Changes and validation in 0.1.0a5](docs/RELEASE_0.1.0a5.md) · [FLADIS ammonia validation closeout](docs/FLADIS_VALIDATION.md)
+
 In the documented FFI benchmark, PlumeSwift obtained an RMSE of **1.9843 percentage points** across 210 time-averaged measurements. Nine sensors measured at least 4 vol%, and the model predicted at least 4 vol% at two of those sensors. The documented serial and parallel Python runs agreed on sensor concentrations and mass accounting. An earlier timing comparison took 78.1 seconds for five Python case workers and 92.9 seconds for five C++ case workers with the research LH₂ coupling. The two workflows performed different output work, so these figures describe those runs. [Development and validation notes](docs/DEVELOPMENT.md) · [Timing and comparison data](docs/evidence/ffi5_comparison.json)
 
 The LH₂ model uses equilibrium properties and particle coupling for research. Separate validation is needed for scenarios dominated by flashing, separate liquid droplets or pools, ground heat transfer, density feedback on the wind field, or ignition. The FFI results also show limited recovery of high measured concentrations. Use the [validation protocol](docs/LH2_direct_benchmark.md) and [component status](python_qes/component_status.json) to assess fit for a particular scenario.
@@ -208,6 +223,6 @@ python -m pytest -q python_qes/tests/test_components.py python_qes/tests/test_nu
 
 See the [development notes](docs/DEVELOPMENT.md) for reproducibility details and the [release procedure](docs/RELEASE.md) for packaging.
 
-When using PlumeSwift in research, cite the specific version and acknowledge the relevant QES methods and experimental data sources. [Citation metadata](CITATION.cff) · [PlumeSwift 0.1.0a4 DOI](https://doi.org/10.5281/zenodo.24079156) · [Historical QESx archive](https://doi.org/10.5281/zenodo.24073832)
+When using PlumeSwift in research, cite the specific version and acknowledge the relevant QES methods and experimental data sources. [Citation metadata](CITATION.cff) · [PlumeSwift 0.1.0a5 DOI](https://doi.org/10.5281/zenodo.24141108) · [Historical QESx archive](https://doi.org/10.5281/zenodo.24073832)
 
 The QES-derived code is distributed under GPL-3.0-only. The glibc-derived numerical components retain LGPL-2.1-or-later. See the [GPL license](LICENSE), [LGPL license](python_qes/LICENSE.LGPL-2.1), and [attribution and third-party notices](python_qes/NOTICE.md).

@@ -25,14 +25,19 @@ class GridAverage:
         self.end = end
         self.sampled_s = 0.
 
-    def observe(self, time, dt, positions, masses):
+    def observe(self, time, dt, positions, masses, *, enthalpy=None):
         weight = max(0., min(time + dt, self.end) - max(time, self.start))
         if not weight:
             return
         ids = np.ravel_multi_index(self.sampler.cell_indices(positions), self.integral.shape)
         mass = np.bincount(ids, weights=masses)
         occupied = np.flatnonzero(mass)
-        fraction = self.thermo.evaluate(mass[occupied] / self.volume).volume_fraction
+        concentration = mass[occupied] / self.volume
+        if enthalpy is None:
+            fraction = self.thermo.evaluate(concentration).volume_fraction
+        else:
+            energy = np.bincount(ids, weights=masses * enthalpy)[occupied] / self.volume
+            fraction = self.thermo.evaluate(concentration, energy).volume_fraction
         self.integral.ravel()[occupied] += weight * fraction
         self.sampled_s += weight
 

@@ -1,0 +1,66 @@
+FLADIS 9, 16 and 24 / equivalent-vapor benchmark
+
+Inputs
+  SMEDIS v2.4 spreadsheets: https://admlc.com/smedis-dataset/
+  JRIII protocol: https://admlc.com/wp-content/uploads/2025/05/jriii-initial-modeling-exercise-description-v2.4.pdf
+  Site geometry: https://admlc.com/wp-content/uploads/2025/05/fladis-test-site-geometry-and-wind-directions-v1.pdf
+  Gexcon submission: https://admlc.com/wp-content/uploads/2025/05/flacs_gexcon_lmauri.zip
+
+  Place fladis9.xls, fladis16.xls and fladis24.xls from SMEDIS batches 3, 2
+  and 2 respectively in tmp/ammonia_benchmarks, with the Gexcon ZIP named
+  flacs.zip. Use the JRIII protocol for source and wind inputs where workbook
+  summaries differ. Coordinates come from each workbook. Trial 16's source
+  is 2 m upstream of the array origin. The model uses flat unobstructed ground,
+  consistent with the JRIII baseline terrain option. Upstream building wakes
+  and explicit low-frequency wind meander are omitted. The surface-layer GLE
+  uses the prescribed mean direction, Monin–Obukhov length, friction velocity
+  and measured crosswind velocity variance, without concentration fitting.
+
+  Inject the published fully vaporized top-hat handoff at the Table 4
+  axial location, 1.5 m height, temperature, speed, and 12 mol% NH3.
+  Keep the tabulated NH3 mass flux by reconciling the disk diameter with
+  the ideal-gas mixture at site pressure (9: 0.88 -> 0.933 m; 16: 0.73 ->
+  0.739 m; 24: 1.069 -> 1.066 m). Temperature and concentration set the
+  injected sensible enthalpy through the air/NH3 ratio. Transport uses the
+  existing buoyancy, drag and shallow-layer pressure closures with NH3/air
+  molecular weights and fixed gas heat capacities. The model does not solve
+  the upstream liquid jet or include NH3 absorption, deposition, humid-air
+  phase change or explicit ground heat exchange. Gexcon's final runs do
+  include ground heat exchange.
+
+Comparison
+  Sample the 20, 70 and far arcs for the JRIII 600, 600 and 400 s windows
+  starting at simulated release onset. The exact start of each window in
+  the original time series was not available in the spreadsheets. The far
+  arcs are reported together under 240 m. JRIII lists actual radii 238 m
+  for Trials 9/24 and 240 m for Trial 16, while SMEDIS labels them 235.5 m
+  and Gexcon submits the far fixed-height maxima at 238 m for all trials.
+  Use the actual workbook coordinates for each measured sensor, including
+  additional vertical levels. Exclude non-arc auxiliary sensors.
+
+  Fixed-height arc scans use z=0.1, 0.5 and 1.5 m, with lateral increments
+  1, 2 and 4 m respectively. The receptor averaging boxes are 2x2x0.2,
+  4x4x0.4 and 8x8x0.6 m. Report three maximum definitions in the CSV:
+  the published observed arc maximum, the maxima over the paired sensors
+  at the reference height, and the maximum from the model's arc scan.
+  On the 70 m arc the workbook has no 0.5 m center receptor, but the
+  published observed maximum can be from another height (FLADIS 24's
+  2610 ppm at z=0.1 m). Width is lateral concentration-weighted standard
+  deviation using trapezoidal integration, both over the model arc scan
+  and over identical sensor positions for the measured/model pair.
+  Published SMEDIS width is also shown as a separate reference.
+
+  For FLACS, use the latest submitted provided-source (CERC) maxima at
+  measurement heights, Pasquill D as the common reporting reference.
+  Report the range across alternate E (Trial 16) and C (Trial 24)
+  submissions in the CSV. Gexcon does not publish receptor-wise predictions
+  or plume widths in this archive, so those comparisons use measurements.
+  The result is a cross-model benchmark with differing wind/mixing/heat
+  treatments, not a controlled comparison of the numerical solvers.
+
+Reproduce from the repository root in PowerShell
+  $env:PYTHONPATH=((Resolve-Path python_qes).Path,(Resolve-Path tmp).Path,(Resolve-Path tmp/smedis_deps).Path) -join ';'
+  $env:OPENBLAS_NUM_THREADS='1'
+  $env:NUMBA_CACHE_DIR=Join-Path (Resolve-Path tmp).Path 'lh2-cryogenic-numba'
+  .venv/Scripts/python.exe results/fladis_benchmark/run_fladis.py
+  .venv/Scripts/python.exe results/fladis_benchmark/compare_fladis.py

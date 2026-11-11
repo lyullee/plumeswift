@@ -89,14 +89,20 @@ class StepRelease:
         return (self.particles, self.mass_kg) if self.start_s <= t <= self.end_s else (0, 0.)
 
 
+class Release(Protocol):
+    def count_and_mass(self, t: float, dt: float) -> tuple[int, float]: ...
+
+
 @dataclass
 class Source:
     geometry:Geometry
-    release:ContinuousRelease|InstantaneousRelease|StepRelease
+    release:Release
     source_id:int=0
     initial_drift:tuple[float,float,float]=(0.,0.,0.)
     diameter_um:float=0.
     density_kg_m3:float=0.
+    specific_enthalpy_j_kg:float=0.
+    carrier_air_per_h2:float=0.
     _pending_mass:float=field(default=0.,init=False,repr=False)
     def emit(self,t,dt,rng):
         count,mass=self.release.count_and_mass(t,dt);self._pending_mass+=mass

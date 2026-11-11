@@ -1,6 +1,6 @@
 # PlumeSwift user guide
 
-This guide uses PlumeSwift `0.1.0a4` with Python 3.11 or newer. It covers three workflows: a customizable liquid hydrogen (LH₂) demo, a QES-style wind and passive dispersion case, and the FFI field benchmark. For the project overview and available install extras, see the [README](../README.md).
+This guide uses PlumeSwift `0.1.0a5` with Python 3.11 or newer. It covers three workflows: a customizable liquid hydrogen (LH₂) demo, a QES-style wind and passive dispersion case, and the FFI field benchmark. For the project overview and available install extras, see the [README](../README.md).
 
 - [Set up and check the installation](#1-set-up-and-check-the-installation)
 - [Create and edit an LH₂ case](#2-create-and-edit-an-lh2-case)
@@ -14,12 +14,12 @@ This guide uses PlumeSwift `0.1.0a4` with Python 3.11 or newer. It covers three 
 Run `python -m venv .venv` in your working directory. Activate the environment with `.\.venv\Scripts\Activate.ps1` in Windows PowerShell or `source .venv/bin/activate` on macOS or Linux. Install the release and the extras used here.
 
 ```shell
-python -m pip install "plumeswift[fast,visual,ffi]==0.1.0a4"
+python -m pip install "plumeswift[fast,visual,ffi]==0.1.0a5"
 plumeswift info
 plumeswift plume-managed-container --steps 20 --release-per-step 16 --seed 0
 ```
 
-Check that `info` reports version `0.1.0a4` and that the smoke test prints `"invariants_passed": true`. The CPU examples require no GPU. The `fast` extra enables optional Numba acceleration in supported workflows, `visual` enables LH₂ 3D output, and `ffi` enables local PDF parsing. If the shell cannot find `plumeswift`, use `python -m plumeswift` with the same interpreter that installed the package.
+Check that `info` reports version `0.1.0a5` and that the smoke test prints `"invariants_passed": true`. The CPU examples require no GPU. The `fast` extra enables optional Numba acceleration in supported workflows, `visual` enables LH₂ 3D output, and `ffi` enables local PDF parsing. If the shell cannot find `plumeswift`, use `python -m plumeswift` with the same interpreter that installed the package.
 
 Each example writes into a named directory. Use a fresh output directory for each parameter change so its results remain traceable to its inputs.
 
@@ -194,6 +194,32 @@ plumeswift lh2-ffi --report ffi-report.pdf --tests 1 3 --no-3d --output ffi-sens
 
 Without `--workers`, cases run sequentially. `--workers 5` allows up to five independent case processes. `--no-3d` skips concentration grid and HTML plume generation while retaining the sensor reports and the index page. First-run Numba compilation and rendering can affect wall-clock timings.
 
+`--weather-ensemble --no-3d` evaluates five steady wind states using the wind speed and direction spreads from FFI Tables 2.2–2.8. The central state receives one third of the weight. Each of the four states obtained by varying one input by ±√3 times its reported spread receives one sixth. This matches the reported mean and variance in each input and assumes zero speed–direction covariance. The reported 4 vol% counts use the weighted sensor mean. Individual member results are under `weather_members/`. This option approximates weather variability from summary statistics. It does not reconstruct the timing of measured winds.
+
+`--joint-weather-ensemble --no-3d` evaluates all nine combinations of the same three wind speeds and three bearings. Use it in place of `--weather-ensemble`. The weight of each combination is the product of the two input weights, which are 2/3 at the reported mean and 1/6 at each offset. The product rule retains both reported variances and allows speed and bearing to affect the plume together. It treats the two inputs as independent because the tables provide separate spreads. The summary records the rule used, and the threshold still applies to the weighted sensor mean.
+
+`--wind-roughness` overrides the aerodynamic roughness length in metres for all selected cases. The FFI template uses 0.01 m. For a sensitivity case, the published EFFECTS analysis of FFI Tests 4 and 6 used 0.03 m. [FFI wind-profile sensitivity study](https://hysafe.info/uploads/papers/2023/208.pdf)
+
+Run the joint ensemble at 0.03 m with dense cryogenic physics and a ground heat-transfer coefficient of 20 W/(m²·K):
+
+```shell
+plumeswift lh2-ffi --report ffi-report.pdf --workers 5 --no-3d --physics dense --cryogenic-rh 0 --ground-heat-transfer 20 --wind-roughness 0.03 --joint-weather-ensemble --output ffi-joint
+```
+
+The measured-wind option accepts the original DNV outdoor workbooks from the [Norwegian Public Roads Administration archive](https://liquidhydrogentests.z6.web.core.windows.net/). Extract the data workbook from each selected outdoor test ZIP and name it `test1.xlsx` through `test7.xlsx` in a directory such as `ffi-raw`. The workbooks are separate inputs and the benchmark still obtains the observed means from the report PDF.
+
+```shell
+plumeswift lh2-ffi --report ffi-report.pdf --workers 5 --no-3d --physics dense --cryogenic-rh 0 --ground-heat-transfer 20 --wind-roughness 0.03 --measured-weather ffi-raw --wind-interval 20 --output ffi-measured
+```
+
+The measured-wind mode averages the mast readings as horizontal vectors and updates wind and turbulence for each interval. It uses the 10 m record by default. Use `--wind-reference-height 5` for a separate near-ground sensitivity run. The wind profile is still neutral and uses the selected mast height as its reference. The release and averaging windows use the experimental clock, with the second release used for Test 5. This benchmark uses the reported nominal flow rate. Its output records the applied wind frames and the release clock origin in `case.json`.
+
+Add `--site-container` to test the effect of the stacked ISO containers. The dimensions come from DNV 853182, revision 2, section 4.1. The position is an estimate from FFI Figure 2.7. Add `--conservative-handoff` to track the air entrained in the near-field jet separately from emitted hydrogen and include its inertia in cell drift averaging. This switch applies to the cryogenic modes. It retains the existing downstream thermodynamic and dispersion closures. Use separate output directories to compare each change independently.
+
+Add `--crossflow-jet` to integrate the horizontal near-field jet using local wind, shear entrainment and vector momentum. It also enables carrier tracking for the horizontal releases. For measured winds the injection state is recalculated at each wind update, while particles already in the domain continue their trajectories. In a custom LH₂ demo this is `"crossflow_jet": true` inside `cryogenic` and requires a horizontal nozzle without a pool.
+
+Add `--plume-section-forces` to use a downstream vertical force model. For a custom LH₂ demo, set `"plume_section_forces": true` inside `cryogenic`. The model estimates an elliptical cross-section from hydrogen-mass-weighted particle positions in slices aligned with the resolved wind at the nozzle. The semi-axes equal twice the transverse and vertical standard deviations, with a grid-scale floor. The vertical force uses local mixture buoyancy, an elliptical added-mass term and quadratic drag based on projected width. The new force blends in between two and three horizontal grid spacings from the nozzle. The summary records the active steps and the mean and peak section dimensions. This approximation represents one coherent cloud section in each slice and can combine separate lobes that occupy the same slice.
+
 Open `index.html` for the summary and links to each test. The top-level `sensor_comparison.csv` combines all selected cases. A directory such as `test3` holds its own CSV, `summary.json`, `case.json`, and generated `winds.xml`, as well as `plume.html` and `concentration.npz` when 3D output is enabled.
 
 - The CSV records observed and predicted averages in vol%, and `error_pp` is predicted minus observed, in percentage points. For example, 0.75 vol% predicted against 1.00 vol% observed gives −0.25 percentage points.
@@ -202,6 +228,65 @@ Open `index.html` for the summary and links to each test. The top-level `sensor_
 - In `summary.json`, RMSE gives greater weight to large errors than MAE does. Bias is the signed mean error. `measured_at_least_4` counts observed averages of at least 4 vol%, and `detected_at_least_4` counts those same sensors where the prediction also reaches 4 vol%.
 
 The documented run reports 210 sensor averages, RMSE of approximately **1.9843 percentage points**, and a bias of about **−0.7048 percentage points**. The model reached 4 vol% at two of the nine sensors whose observed averages reached that level. The benchmark uses prescribed wind on an open site, and FFI derived the reported concentrations from oxygen depletion. Keep the full PDF and locally generated files that contain observations separate from distributable software artifacts. [Benchmark protocol](LH2_direct_benchmark.md) · [Validation evidence](evidence/ffi5_comparison.json)
+
+### Experimental cryogenic workflow
+
+The `lh2-ffi` command accepts `--physics legacy`, `jet`, `pool`, or `dense`. The default is `legacy`. The three experimental settings are cumulative. A horizontal release uses the jet without a pool, even under `pool` or `dense`. For an editable 3D case with obstacles, install `visual` and `thermo`, then copy the bundled example.
+
+```bash
+plumeswift lh2-demo --write-input cryogenic.json
+```
+
+Add this `cryogenic` field to the top-level case object, keeping the other fields in the copied file.
+
+```json
+{
+  "cryogenic": {
+    "release_end_s": 12,
+    "jet": {
+      "direction": [0, 0, -1],
+      "nozzle_diameter_m": 0.0254,
+      "handoff_distance_m": 0.5,
+      "upstream_pressure_pa": 326325,
+      "upstream_temperature_k": 22
+    },
+    "pool": {
+      "radius_m": 0.5,
+      "ground_temperature_k": 293.15,
+      "ground_effusivity": 1000
+    },
+    "dense_layer": {
+      "depth_m": 1
+    },
+    "ground_heat": {
+      "ground_temperature_k": 290,
+      "heat_transfer_w_m2_k": 20
+    },
+    "density_entrainment": {
+      "coefficient": 0.1
+    }
+  }
+}
+```
+
+```bash
+plumeswift lh2-demo --input cryogenic.json --output cryogenic-results --open
+```
+
+| Component | Inputs and model assumptions | Output or diagnostic |
+| --- | --- | --- |
+| `lh2_jet` | Direction vector, nozzle diameter, handoff distance and prescribed H₂ mass rate. Supply absolute upstream pressure and temperature for an isenthalpic flash, or replace both with `exit_vapor_mass_fraction` in `[0, 1]`. The ambient pressure defaults to 101325 Pa. The integral model uses still-air entrainment with coefficient `entrainment_coefficient` (default 0.07), a uniform cross section, and constant axial momentum until handoff or centreline impact. CoolProp is queried at setup. | `jet` records the location, width (`radius_m`), vapor mass fraction, temperature, air entrainment, axial momentum and specific enthalpy before impact. Wind and building transport use the existing 3D solver downstream of handoff. Keep the near-field segment clear of obstacles. |
+| `lh2_energy` | Each marker carries an energy tracer referenced to saturated H₂ vapor and ambient air. Gas volume uses a temperature-dependent CoolProp H₂ table at the case pressure. Moist air uses the ambient water loading, local vapor saturation over liquid or ice, and the sensible and latent enthalpy of all water phases. The case's `relative_humidity_pct` can be overridden inside `cryogenic`, including with zero for a dry control. | Gas-phase H₂ vol%, mixture temperature and density. Condensed water contributes mass and energy. Its occupied volume and separate transport are neglected. The equilibrium treatment does not track nitrogen or oxygen condensation. |
+| `lh2_pool` | Optional for a downward jet that reaches the ground within `handoff_distance_m`. Residual liquid at impact feeds a pool of fixed radius. `ground_effusivity` is in J/(m² K √s). The semi-infinite substrate starts at `ground_temperature_k`. Optional `background_flux_w_m2` defaults to zero. `release_end_s` is the time the nozzle stops feeding the pool, and defaults to the end of the simulation when omitted. | Vapor emitted into the first fluid layer and `pool` diagnostics for liquid fed, evaporated and retained. The fixed footprint does not solve runoff or droplet trajectories. |
+| `lh2_dense` | Optional flat-ground layer depth in metres and `minimum_density_excess` (default 0.02 relative to ambient). A hydrostatic excess-density head drives a horizontal particle drift correction. Solid faces block the pressure contribution. | Three-dimensional transport with a near-ground spreading correction. The correction does not solve a separate fluid layer or feed momentum back into the diagnostic wind. |
+| `lh2_ground_heat` | Optional ground temperature and heat-transfer coefficient in W/(m² K). Sensible heat enters particles in the first fluid layer over flat ground, bounded by equilibrium at the ground temperature. | Cumulative `ground_heat_j`, tracked separately from the heat used to evaporate the pool. |
+| `lh2_entrainment` | Optional dimensionless `coefficient` and random `seed`. Density excess drives exchange through the sides of a heavy cloud and density deficit drives exchange through the top of a light cloud. Face exchange is limited by the H₂ concentration contrast and blocked by solid faces. | Markers carry their mass and enthalpy across neighboring fluid cells to model subgrid mixing with ambient air. The reported exchanged volume is a modeled flux integral. Transferred H₂ counts repeated transfers. |
+
+For `lh2-ffi`, cryogenic modes default to the archived assumed humidity unless `--cryogenic-rh` overrides it. `--ground-heat-transfer` enables heating with ground temperature set to the case ambient temperature. `--density-entrainment` enables face exchange. The example coefficients illustrate the configuration and have not been calibrated for FFI.
+
+The optional `fast` extra compiles the table-backed equilibrium temperature search. It uses the same property tables and bisection as the NumPy path. Python callers can set `CryogenicMixture.use_compiled` to `False` when constructing a reference calculation. Compare elapsed times after the first kernel compilation.
+
+The cryogenic section in `summary.json` separates total H₂ supplied from airborne mass and liquid remaining. Check `source_balance_error_kg` for the full release and `accounting.mass_balance_error_kg` for particle transport. The JSON and the 3D output report concentration from the same thermal closure. These options are experimental and require separate validation by release orientation, substrate, and receptor position. [FFI field measurements](https://www.ffi.no/en/publications-archive/large-scale-leakage-of-liquid-hydrogen-lh2-tests-related-to-bunkering-and-maritime-use-of-liquid-hydrogen) · [Published FFI CFD comparison](https://hysafe.info/uploads/papers/2023/152.pdf)
 
 ## 5. Read results with Python
 

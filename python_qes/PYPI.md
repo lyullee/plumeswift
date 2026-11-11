@@ -19,7 +19,7 @@ Run the bundled synthetic liquid hydrogen example and open its interactive 3D
 concentration plot in a browser:
 
 ```shell
-python -m pip install "plumeswift[visual]==0.1.0a4"
+python -m pip install "plumeswift[visual]==0.1.0a5"
 plumeswift lh2-demo --output lh2-result --open
 ```
 
@@ -31,7 +31,7 @@ and save it as `ffi-report.pdf`. PlumeSwift reads the sensor means from the loca
 PDF and links the comparisons and interactive 3D plumes in the result index.
 
 ```shell
-python -m pip install "plumeswift[fast,visual,ffi]==0.1.0a4"
+python -m pip install "plumeswift[fast,visual,ffi]==0.1.0a5"
 plumeswift lh2-ffi --report ffi-report.pdf --workers 5 --output ffi-results --open
 ```
 
@@ -48,3 +48,5 @@ does not establish the model's suitability for determining safety distances.
 
 The QES-derived code is GPL-3.0-only. The glibc-derived numerical components
 retain LGPL-2.1-or-later. See the included license files and NOTICE.
+
+See the [0.1.0a5 validation notes](https://github.com/lyullee/plumeswift/blob/v0.1.0a5/docs/RELEASE_0.1.0a5.md) for the new optional physics and the [FLADIS closeout](https://github.com/lyullee/plumeswift/blob/v0.1.0a5/docs/FLADIS_VALIDATION.md) for the ammonia results.

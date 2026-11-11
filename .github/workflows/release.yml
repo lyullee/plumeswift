@@ -47,7 +47,7 @@ jobs:
       - name: Install and test the built wheel
         run: |
           wheel="$(find dist -name '*.whl' -print -quit)"
-          python -m pip install "${wheel}[fast,test,visual]"
+          python -m pip install "${wheel}[fast,test,visual,thermo]"
           cd "$RUNNER_TEMP"
           python -m plumeswift info
           python -m plumeswift plume-managed-container --steps 20 --release-per-step 16 --seed 0
@@ -55,6 +55,10 @@ jobs:
           cp "$GITHUB_WORKSPACE/python_qes/tests/test_components.py" \
              "$GITHUB_WORKSPACE/python_qes/tests/test_numerics.py" \
              "$GITHUB_WORKSPACE/python_qes/tests/test_lh2_demo.py" \
+             "$GITHUB_WORKSPACE/python_qes/tests/test_lh2_cryogenic.py" \
+             "$GITHUB_WORKSPACE/python_qes/tests/test_ammonia_moist.py" \
+             "$GITHUB_WORKSPACE/python_qes/tests/test_particle_density.py" \
+             "$GITHUB_WORKSPACE/python_qes/tests/test_fence_wake.py" \
              "$GITHUB_WORKSPACE/python_qes/tests/test_ffi_lh2.py" tests/
           python -m pytest -q tests
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

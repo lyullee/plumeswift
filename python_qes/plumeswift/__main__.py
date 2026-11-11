@@ -57,6 +57,34 @@ def main(argv=None, *, launcher=None):
     ffi_lh2.add_argument('--workers', type=int, default=1, help='Number of independent case processes')
     ffi_lh2.add_argument('--output', type=Path, default=Path('ffi-results'), help='Result directory')
     ffi_lh2.add_argument('--no-3d', action='store_true', help='Write sensor comparisons without 3D fields')
+    ffi_lh2.add_argument('--physics', choices=('legacy', 'jet', 'pool', 'dense'), default='legacy',
+                         help='Select cumulative experimental cryogenic physics (default: legacy)')
+    ffi_lh2.add_argument('--cryogenic-rh', type=float, help='Override cryogenic relative humidity (percent)')
+    ffi_lh2.add_argument('--ground-heat-transfer', type=float, metavar='W_M2_K',
+                         help='Enable ground-to-cloud heat exchange with this coefficient')
+    ffi_lh2.add_argument('--density-entrainment', type=float, metavar='COEFFICIENT',
+                         help='Enable density-driven cloud exchange with this dimensionless coefficient')
+    ffi_lh2.add_argument('--conservative-handoff', action='store_true',
+                         help='Track pre-entrained air separately and include its inertia in the jet handoff')
+    ffi_lh2.add_argument('--crossflow-jet', action='store_true',
+                         help='Apply vector momentum and shear entrainment to the horizontal near-field jets')
+    ffi_lh2.add_argument('--plume-section-forces', action='store_true',
+                         help='Couple downstream section width and depth to vertical buoyancy and drag')
+    ffi_weather = ffi_lh2.add_mutually_exclusive_group()
+    ffi_weather.add_argument('--weather-ensemble', action='store_true',
+                             help='Average five states from reported wind variability (requires --no-3d)')
+    ffi_weather.add_argument('--joint-weather-ensemble', action='store_true',
+                             help='Average nine states with combined wind speed and bearing variability (requires --no-3d)')
+    ffi_weather.add_argument('--measured-weather', type=Path, metavar='DIR',
+                             help='Replay FFI mast winds from test1.xlsx through test7.xlsx in DIR')
+    ffi_lh2.add_argument('--wind-interval', type=float, default=20., metavar='SECONDS',
+                         help='Vector averaging and update interval for measured winds (default: 20 s)')
+    ffi_lh2.add_argument('--wind-reference-height', type=int, choices=(5, 10), default=10,
+                         help='Reference mast height in metres for measured winds (default: 10 m)')
+    ffi_lh2.add_argument('--site-container', action='store_true',
+                         help='Include the stacked FFI ISO containers at a drawing-derived location')
+    ffi_lh2.add_argument('--wind-roughness', type=float, metavar='METRES',
+                         help='Override the FFI aerodynamic surface roughness length')
     ffi_lh2.add_argument('--open', action='store_true', help='Open the completed report in your browser')
     runtime_info = command.add_parser('runtime-info', help='Show the original QES startup banner and runtime diagnostics')
     runtime_info.add_argument('--cuda', action='store_true', help='Query CUDA devices using the optional CuPy backend')
@@ -401,7 +429,15 @@ def main(argv=None, *, launcher=None):
         from .ffi_lh2 import run_ffi
 
         try:
-            result = run_ffi(args.tests, args.output, args.workers, report=args.report, render=not args.no_3d)
+            result = run_ffi(args.tests, args.output, args.workers, report=args.report,
+                             render=not args.no_3d, physics=args.physics, cryogenic_rh=args.cryogenic_rh,
+                             ground_heat_transfer=args.ground_heat_transfer,
+                             density_entrainment=args.density_entrainment, weather_ensemble=args.weather_ensemble,
+                             wind_roughness=args.wind_roughness, joint_weather_ensemble=args.joint_weather_ensemble,
+                             measured_weather=args.measured_weather, wind_interval_s=args.wind_interval,
+                             wind_reference_height_m=args.wind_reference_height,
+                             conservative_handoff=args.conservative_handoff, site_container=args.site_container,
+                             crossflow_jet=args.crossflow_jet, plume_section_forces=args.plume_section_forces)
         except (ValueError, OSError, RuntimeError) as error:
             ffi_lh2.error(str(error))
         print(json.dumps(dict(result['overall'], wall_s=result['wall_s'],

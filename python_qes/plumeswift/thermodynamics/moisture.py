@@ -6,6 +6,28 @@ def saturation_pressure_water(T):
     value=611.21*np.exp(np.clip((18.678-t/234.5)*t/(257.14+t),-100,30))
     return np.where(T>173.,value,0.)
 
+
+WATER_TRIPLE_K = 273.16
+R_WATER = 8.314462618 / .01801528
+
+
+def equilibrium_water_pressure(temperature):
+    """Water saturation pressure over liquid and IAPWS R14-08 ice Ih."""
+    temperature = np.asarray(temperature)
+    theta = np.maximum(temperature, 50.) / WATER_TRIPLE_K
+    terms = (-21.2144006 * theta**.00333333333 + 27.3203819 * theta**1.20666667
+             - 6.10598130 * theta**1.70333333)
+    ice = np.where(temperature >= 50., 611.657 * np.exp(terms / theta), 0.)
+    return np.where(temperature < WATER_TRIPLE_K, ice, saturation_pressure_water(temperature))
+
+
+def water_enthalpy(temperature, *, condensed=False):
+    """Specific enthalpy relative to liquid water at the triple point."""
+    delta = np.asarray(temperature) - WATER_TRIPLE_K
+    if condensed:
+        return np.where(delta < 0., -333500. + 2100. * delta, 4180. * delta)
+    return 2501000. + 1860. * delta
+
 class TraceWaterEnergy:
     def enthalpy_change(self,temperatures,ambient_temperature,relative_humidity,pressure,properties,liquid_fraction_at_freezing=None):
         T=np.asarray(temperatures);Ta=ambient_temperature;p=pressure

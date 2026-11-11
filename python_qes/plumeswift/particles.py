@@ -30,6 +30,9 @@ class ParticleBatch:
     material:np.ndarray|None=None
     slots:np.ndarray|None=None
     previous_fluctuations:np.ndarray|None=None
+    specific_enthalpy:np.ndarray|None=None
+    carrier_air_mass:np.ndarray|None=None
+    mixture_mass_ratio:np.ndarray|None=None
     @classmethod
     def empty(cls):return cls(np.empty((0,3)),np.empty(0),np.empty((0,3)),np.empty((0,3,3)),np.empty((0,3)),np.empty(0,dtype=np.int64))
     def retain(self,keep):
@@ -57,6 +60,13 @@ class ParticleBatch:
         if self.material is not None:
             physical = np.array([1e-6*source.diameter_um, source.density_kg_m3])
             self.material = np.concatenate((self.material, (mass[:, None] > 0)*physical))
+        if self.specific_enthalpy is not None:
+            self.specific_enthalpy = np.concatenate((self.specific_enthalpy,
+                                                     np.full(len(mass), source.specific_enthalpy_j_kg)))
+        if self.carrier_air_mass is not None:
+            self.carrier_air_mass = np.concatenate((self.carrier_air_mass, mass * source.carrier_air_per_h2))
+        if self.mixture_mass_ratio is not None:
+            self.mixture_mass_ratio = np.concatenate((self.mixture_mass_ratio, np.zeros(len(mass))))
 
 def courant_timestep(distance,absolute_velocity,remaining,main_dt,courant,min_spacing):
     """Same adaptive distance/speed logic as PLUMEGeneralData.cpp."""
@@ -106,7 +116,8 @@ def _substeps(alive, remaining, tolerance, serial):
 class ParticleIntegrator:
     def __init__(self,fields,boundaries,walls,rng,policy=None,scheme='backward-euler',courant=.25,max_velocity=1e6,
                  *, main_step=None, min_spacing=None, rogue_velocity=None, deposition=None, executor=None,
-                 native_arithmetic=False, sampling_in_grid=None, sampling_pool=None, compiled_gle=False):
+                 native_arithmetic=False, sampling_in_grid=None, sampling_pool=None, compiled_gle=False,
+                 vertical_transport=None):
         self.fields=fields;self.boundaries=boundaries;self.walls=walls;self.rng=rng
         if self.fields.mixlength is None:raise ValueError("Particle timestep requires an explicit mixing-length field")
         self.policy=policy or NumericPolicy();self.scheme=scheme;self.courant=courant;self.max_velocity=max_velocity
@@ -119,6 +130,7 @@ class ParticleIntegrator:
         if sampling_pool is not None and sampling_pool.fields is not fields:
             raise ValueError('Sampling pool must use the integrator workspace')
         self.sampling_pool = sampling_pool
+        self.vertical_transport = vertical_transport
         self.native_math = native_arithmetic or isinstance(rng, NativeCPUStreams)
         self.native_gle = self.native_math and scheme == 'backward-euler'
         self.compiled_gle = compiled_gle and not self.native_math
@@ -222,6 +234,8 @@ class ParticleIntegrator:
                 previous = previous.astype(np.float32)
             tau, flux, ce, viscosity, distance = (self.fields.sample_turbulence_and_distance(p)
                                                  if samples is None else samples)
+            if self.vertical_transport is not None:
+                mean[:, 2] += self.vertical_transport(p, wind[:, 2], batch.drift[ids, 2], tau[:, 2, 2])
             local_dt = step(distance, abs(mean)+abs(previous), remaining[ids],
                             self.main_step or dt, self.courant, spacing)
             nonpositive_step = np.any(local_dt <= 0)
@@ -317,7 +331,9 @@ class ParticleSimulation:
     """
     def __init__(self,sources,integrator,observers=(),momentum=None,cell_volume=None, *,
                  initial_active=None, track_particles=False, allocate_ids=None, serial_slots=False,
-                 native_release_indexing=False, initial_in_grid=None, momentum_cell_indices=None):
+                 native_release_indexing=False, initial_in_grid=None, momentum_cell_indices=None,
+                 track_enthalpy=False, density_entrainment=None, track_carrier_air=False,
+                 track_mixture_inertia=False):
         self.sources=tuple(sources);self.integrator=integrator;self.observers=tuple(observers);self.momentum=momentum
         self.cell_volume=cell_volume;self.batch=ParticleBatch.empty();self.released_mass_kg=0.;self.released_particles=0;self.time_s=0.
         self.momentum_cell_indices = momentum_cell_indices
@@ -338,6 +354,22 @@ class ParticleSimulation:
             self.batch.tracking = np.empty(0, dtype=TRACKING_DTYPE)
         if integrator.deposition is not None:
             self.batch.material = np.empty((0, 2))
+        if track_enthalpy:
+            self.batch.specific_enthalpy = np.empty(0)
+        if track_mixture_inertia:
+            if momentum is None or not track_enthalpy:
+                raise ValueError('Mixture inertia requires momentum and enthalpy transport')
+            self.batch.mixture_mass_ratio = np.empty(0)
+        if track_carrier_air:
+            if not track_enthalpy or momentum is None or self.replay is not None:
+                raise ValueError('Carrier air requires cryogenic momentum and enthalpy transport')
+            self.batch.carrier_air_mass = np.empty(0)
+            self.released_carrier_air_kg = 0.
+            self.escaped_carrier_air_kg = 0.
+            self.released_drift_impulse_ns = np.zeros(3)
+        if density_entrainment is not None and (not track_enthalpy or momentum is None or self.replay is not None):
+            raise ValueError('Density entrainment requires cryogenic enthalpy transport')
+        self.density_entrainment = density_entrainment
         self.inactive_on_release_mass_kg = 0.
         self.inactive_on_release_particles = 0
 
@@ -433,6 +465,10 @@ class ParticleSimulation:
             if history is None:
                 initial, tau = self._initial_state(p, ordinals, new_count)
             drift=np.broadcast_to(source.initial_drift,p.shape).copy()
+            if self.batch.carrier_air_mass is not None:
+                air = float(m.sum()) * source.carrier_air_per_h2
+                self.released_carrier_air_kg += air
+                self.released_drift_impulse_ns += (float(m.sum()) + air) * np.asarray(source.initial_drift)
             self.batch.append(p,m,initial,tau,drift,ids,source=source,release_s=self.time_s,slots=slots,
                               previous_fluctuation=previous_fluctuation)
             if history is not None and self.batch.tracking is not None:
@@ -444,13 +480,25 @@ class ParticleSimulation:
             shape = (len(field.z), len(field.y), len(field.x))
             flat = np.ravel_multi_index(locate(self.batch.positions), shape)
             volume = self.cell_volume[np.unique(flat)] if np.ndim(self.cell_volume) else self.cell_volume
-            self.batch.drift,_=self.momentum.update(self.batch.positions,self.batch.mass,self.batch.drift,flat,volume,dt)
+            thermal = {} if self.batch.specific_enthalpy is None else {'enthalpy': self.batch.specific_enthalpy}
+            if self.batch.carrier_air_mass is not None:
+                thermal['carrier_air_mass'] = self.batch.carrier_air_mass
+            if self.batch.mixture_mass_ratio is not None:
+                thermal['mixture_mass_ratio'] = self.batch.mixture_mass_ratio
+            self.batch.drift,_=self.momentum.update(self.batch.positions,self.batch.mass,self.batch.drift,flat,volume,dt,**thermal)
+        air_before = None if self.batch.carrier_air_mass is None else float(self.batch.carrier_air_mass.sum())
         if self.replay is None:
             self.integrator.advance(self.batch, dt)
         else:
             self.integrator.advance(self.batch, dt, slot_capacity=self.slot_capacity,
                                     capture=None if history is None else history.capture)
-        for observer in self.observers:observer.observe(self.time_s,dt,self.batch.positions,self.batch.mass)
+        if air_before is not None:
+            self.escaped_carrier_air_kg += air_before - float(self.batch.carrier_air_mass.sum())
+        if self.density_entrainment is not None:
+            self.density_entrainment.mix(self.batch, self.momentum.thermo, dt)
+        thermal = {} if self.batch.specific_enthalpy is None else {'enthalpy': self.batch.specific_enthalpy}
+        for observer in self.observers:
+            observer.observe(self.time_s,dt,self.batch.positions,self.batch.mass,**thermal)
         self.time_s+=dt
     def run(self,duration_s,dt,progress=None):
         """Advance to the requested model time and return mass accounting."""
@@ -475,6 +523,11 @@ class ParticleSimulation:
         if self.initial_active is not None:
             result.update(inactive_on_release_particles=self.inactive_on_release_particles,
                           inactive_on_release_mass_kg=self.inactive_on_release_mass_kg)
+        if self.batch.carrier_air_mass is not None:
+            result.update(released_carrier_air_kg=self.released_carrier_air_kg,
+                          active_carrier_air_kg=float(self.batch.carrier_air_mass.sum()),
+                          removed_carrier_air_kg=self.escaped_carrier_air_kg,
+                          released_drift_impulse_ns=self.released_drift_impulse_ns.tolist())
         if self.integrator.rogue_velocity is not None:
             result.update(rogue_particles=self.integrator.rogue_particles, rogue_mass_kg=rogue_mass)
         deposition = self.integrator.deposition

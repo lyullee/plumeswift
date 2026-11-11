@@ -12,6 +12,7 @@ from .geometry import PolygonBuilding
 from .interpolation import FieldSampler
 from .io import write_arrays
 from .lh2 import LH2Momentum
+from .lh2_case import prepare_cryogenic
 from .lh2_visual import GridAverage, visual_dependencies, write_figure
 from .meteorology import SensorProfile
 from .particles import ParticleIntegrator, ParticleSimulation
@@ -60,15 +61,26 @@ def run_demo(config, output):
             or solid[sampler.cell_indices(np.array([position]))][0]):
         raise ValueError('source_position_m must lie in a fluid cell inside the simulation boundaries')
 
-    thermo = LegacyEquilibrium(ambient_temperature=config['ambient_temperature_k'],
-                               liquid_fraction=config['liquid_mass_fraction'],
-                               relative_humidity=config['relative_humidity_pct'], out_of_range='raise')
+    cryogenic = None
+    if 'cryogenic' in config:
+        cryogenic = prepare_cryogenic(config['cryogenic'], config['ambient_temperature_k'], position,
+                                      config['release_rate_kg_s'], config['particles_per_s'], sampler, solid,
+                                      relative_humidity_pct=config.get('relative_humidity_pct', 0.))
+        thermo, sources, momentum = cryogenic.thermo, cryogenic.sources, cryogenic.momentum
+    else:
+        thermo = LegacyEquilibrium(ambient_temperature=config['ambient_temperature_k'],
+                                   liquid_fraction=config['liquid_mass_fraction'],
+                                   relative_humidity=config['relative_humidity_pct'], out_of_range='raise')
+        sources = [Source(Point(position), ContinuousRelease(config['release_rate_kg_s'], config['particles_per_s']))]
+        momentum = LH2Momentum(thermo)
     volume = prod(domain.spacing)
     observer = GridAverage(sampler, solid.shape, thermo, volume, start, end)
-    source = Source(Point(position), ContinuousRelease(config['release_rate_kg_s'], config['particles_per_s']))
     integrator = ParticleIntegrator(sampler, boundaries, VoxelWalls(sampler, solid),
                                     np.random.default_rng(config['seed']))
-    simulation = ParticleSimulation([source], integrator, [observer], LH2Momentum(thermo), volume)
+    simulation = ParticleSimulation(sources, integrator, [observer], momentum, volume,
+                                    track_enthalpy=cryogenic is not None,
+                                    track_carrier_air=cryogenic is not None and cryogenic.track_carrier_air,
+                                    density_entrainment=None if cryogenic is None else cryogenic.entrainment)
     accounting = simulation.run(end, dt)
     if not observer.sampled_s:
         raise ValueError('No steps overlap the requested averaging window')
@@ -83,5 +95,9 @@ def run_demo(config, output):
     shown = write_figure(output / 'plume.html', concentration, coordinates, levels, position,
                          f'PlumeSwift · Synthetic LH₂ release · Mean H₂ concentration ({start:g}–{end:g} s)',
                          building=building)
-    return dict(averaged_s=observer.sampled_s, peak_mean_volpct=float(np.nanmax(concentration)),
-                rendered_isosurfaces_volpct=shown, accounting=accounting, html=str(output / 'plume.html'))
+    result = dict(averaged_s=observer.sampled_s, peak_mean_volpct=float(np.nanmax(concentration)),
+                  rendered_isosurfaces_volpct=shown, accounting=accounting, html=str(output / 'plume.html'))
+    if cryogenic is not None:
+        result['cryogenic'] = cryogenic.diagnostics(end, accounting)
+        (output / 'summary.json').write_text(json.dumps(result, indent=2) + '\n', encoding='utf-8')
+    return result
